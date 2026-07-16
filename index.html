@@ -1,225 +1,346 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<title>เครื่องมือคํานวณเขตความปลอดภัย (Protection Zone
-Calculator)</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เขตพื้นที่ป้องกันโครงสร้างรถไฟฟ้าใต้ดิน (MRT Protection Zone)</title>
 <style>
-body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana,
-sans-serif; padding: 20px; background-color: #f4f7f6; color: #333; }
-.container { max-width: 800px; margin: 0 auto; background:
-white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px
-rgba(0,0,0,0.1); }
+  :root{
+    --ink:#16222E; --paper:#EEF2F5; --card:#FFFFFF; --line:#D5DEE4;
+    --soil:#CBB187; --sky:#F4F8FB;
+    --tunnel:#26404F; --row:#5A6B78; --offset:#8A5CB4;
+    --infl:#1F6FB2; --amber:#E08A00; --thr:#C0392B;
+    --label:#3A4A57; --muted:#7C8A96;
+    --shallow:#1F7A54; --deep:#B4560A;
+    --mono:'DejaVu Sans Mono','SF Mono',Consolas,'Roboto Mono',monospace;
+    --thai:'Sarabun','Leelawadee UI','Segoe UI',Tahoma,'Noto Sans Thai',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:var(--thai);color:var(--ink);background:var(--paper);line-height:1.55;-webkit-text-size-adjust:100%}
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 16px 60px}
 
-h1 { text-align: center; color: #2c3e50; }
-.controls { display: flex; align-items: center;
+  header.top{border-bottom:2px solid var(--ink);padding-bottom:16px;margin-bottom:22px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--infl);margin:0 0 6px}
+  h1{font-size:clamp(21px,3.4vw,30px);line-height:1.2;margin:0 0 8px;font-weight:800}
+  .lede{color:var(--label);max-width:72ch;margin:0;font-size:15px}
 
-justify-content: space-between; margin-bottom: 20px; padding: 15px;
-background-color: #eef2f5; border-radius: 8px; }
+  .grid{display:grid;grid-template-columns:1.35fr .9fr;gap:20px;align-items:start}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
 
-.slider-container { flex-grow: 1; margin: 0 20px; }
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .panel.diagram{padding:8px}
+  figure{margin:0}
+  svg{display:block;width:100%;height:auto;border-radius:8px;background:var(--sky)}
 
-input[type=range] { width: 100%; cursor: pointer; }
-.value-display { font-size: 1.2em; font-weight: bold; color:
+  .modebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .badge{font-family:var(--mono);font-size:12.5px;font-weight:700;padding:6px 11px;border-radius:999px;letter-spacing:.02em;border:1.5px solid}
+  .badge.sh{color:var(--shallow);border-color:var(--shallow);background:rgba(31,122,84,.08)}
+  .badge.dp{color:var(--deep);border-color:var(--deep);background:rgba(180,86,10,.09)}
 
-#2980b9; min-width: 120px; text-align: right; }
+  .readout{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:16px;background:linear-gradient(180deg,#fff,#fbfcfd)}
+  .readout .k{font-size:13px;color:var(--muted);margin:0 0 2px}
+  .bignum{font-family:var(--mono);font-weight:800;font-size:clamp(32px,6.6vw,44px);line-height:1;color:var(--amber);letter-spacing:-.01em}
+  .bignum small{font-size:.42em;font-weight:700;color:var(--label);margin-left:6px;letter-spacing:0}
+  .sub{font-family:var(--mono);font-size:13.5px;color:var(--label);margin-top:8px}
+  .sub b{color:var(--ink)}
+  .comp{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:6px}
 
-.results { background-color: #f8f9fa; border-left: 4px solid
-#27ae60; padding: 15px; margin-bottom: 20px; font-size: 1.1em; }
-canvas { border: 1px solid #bdc3c7; background-color: #ffffff;
+  .sliderrow{display:flex;align-items:center;gap:10px;margin:4px 0 6px}
+  .step{width:42px;height:42px;flex:0 0 auto;border:1.5px solid var(--ink);background:#fff;color:var(--ink);font-size:22px;font-weight:700;border-radius:10px;cursor:pointer;line-height:0}
+  .step:active{background:var(--ink);color:#fff}
+  .step:focus-visible{outline:3px solid var(--infl);outline-offset:2px}
+  input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:8px;border-radius:999px;background:var(--line);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid var(--ink);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+  input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid var(--ink);cursor:pointer}
+  input[type=range]:focus-visible::-webkit-slider-thumb{outline:3px solid var(--infl);outline-offset:2px}
+  .scale{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px}
+  .depthval{font-family:var(--mono);text-align:center;font-size:14px;color:var(--label);margin-top:4px}
+  .depthval b{color:var(--ink);font-size:16px}
 
-width: 100%; border-radius: 4px; box-shadow: inset 0 0 5px
-rgba(0,0,0,0.05); }
+  .presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .chip{font-family:var(--mono);font-size:12.5px;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;cursor:pointer;color:var(--label)}
+  .chip[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .chip:focus-visible{outline:3px solid var(--infl);outline-offset:2px}
 
-.instructions { margin-top: 20px; font-size: 0.9em; color:
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px}
+  @media(max-width:640px){.cards{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .card h3{margin:0 0 8px;font-size:15px;display:flex;align-items:center;gap:8px}
+  .dot{width:12px;height:12px;border-radius:3px;flex:0 0 auto}
+  .formula{font-family:var(--mono);font-size:13px;background:#f3f6f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:8px 0;color:var(--ink);overflow-x:auto;line-height:1.7}
+  .card p{margin:6px 0;font-size:14px;color:var(--label)}
 
-#7f8c8d; }
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)}
+  .legend span{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-family:var(--mono);color:var(--label)}
+  .sw{width:20px;height:0;border-top-width:3px;border-top-style:solid;display:inline-block}
+
+  .note{margin-top:22px;background:#fff8ec;border:1px solid #f0d9a8;border-left:4px solid var(--amber);border-radius:10px;padding:14px 16px;font-size:13.5px;color:#6b5220}
+  .note b{color:#8a5a00}
+  footer{margin-top:30px;font-size:12px;color:var(--muted);font-family:var(--mono);text-align:center}
 </style>
 </head>
 <body>
-<div class="container">
-<h1>จําลองการคํานวณระยะเขตความปลอดภัย (Protection Zone)</h1>
-<div class="controls">
-<label for="depthSlider"><strong>ปรับความลึกแกนอุโมงค์
+<div class="wrap">
 
-(Depth):</strong></label>
+  <header class="top">
+    <p class="eyebrow">Underground MRT · Protection Zone</p>
+    <h1>เขตพื้นที่ป้องกันของโครงสร้างรถไฟฟ้าใต้ดิน</h1>
+    <p class="lede">เลื่อนความลึกของแกนอุโมงค์ (ทีละ 0.50 ม.) เพื่อดูแนวเขตป้องกันบนผิวดิน โครงสร้างของแนวคือ
+      <b>offset ราบ 3.00 ม. ออกจากเส้นขอบก่อน</b> แล้วจึงลาดขึ้นตาม Zone of Influence
+      กฎสลับอัตโนมัติที่ความลึก 24 ม. — ตื้นกว่าหรือเท่ากับ 24 ม. ใช้กฎ “ฝั่งขวา” (ลาด 1:1) และลึกกว่า 24 ม. ใช้กฎ “ฝั่งซ้าย” (1:1 ช่วงบน + 2:1 ช่วงล่าง)</p>
+  </header>
 
-<div class="slider-container">
-<input type="range" id="depthSlider" min="5" max="50"
+  <div class="grid">
+    <section class="panel diagram">
+      <figure><div id="diagram"></div></figure>
+    </section>
 
-step="0.5" value="20">
-</div>
-<div class="value-display" id="depthValue">20.00 ม.</div>
-</div>
-<div class="results" id="calculationResult">
-กําลังคํานวณ...
-</div>
-<canvas id="vizCanvas" width="740" height="500"></canvas>
-<div class="instructions">
-<p><strong>หลักการอ้างอิงจากแบบแปลนวิศวกรรม:</strong></p>
-<ul>
-<li><span style="color:#e74c3c">กรณีความลึก ≤ 24 เมตร:
-</span> เส้นขอบเขตความปลอดภัยลาดชัน 1:1 ไปถึงระดับผิวดิน (ระยะขอบเขตบนผิวดิน = ความ
-ลึก)</li>
+    <section class="panel">
+      <div class="modebar">
+        <span id="mode" class="badge sh">โหมดตื้น · กฎฝั่งขวา (D₁ ≤ 24 ม.)</span>
+      </div>
 
-<li><span style="color:#2980b9">กรณีความลึก > 24 เมตร:
-</span> เส้นขอบเขตความปลอดภัยลาดชัน 2:1 จนถึงระดับความลึก -24 เมตร จากนั้นเปลี่ยน
-ความลาดชันเป็น 1:1 (ระยะขอบเขตบนผิวดิน = 24 + (ความลึก - 24) / 2)</li>
+      <div class="readout">
+        <p class="k">ระยะจากศูนย์กลางอุโมงค์ถึงขอบเขตป้องกันบนผิวดิน</p>
+        <div class="bignum"><span id="cval">24.00</span><small>เมตร</small></div>
+        <div class="sub">ความกว้างเขตป้องกัน (นับจากขอบ ROW) = <b id="rval">21.00</b> ม.</div>
+        <div class="comp" id="comp">= 3.00 (ROW) + 3.00 (offset) + 18.00 (ลาด 1:1)</div>
+      </div>
 
-</ul>
+      <label for="depth" class="k" style="font-size:13px;color:var(--muted)">ความลึกถึงแกนอุโมงค์ (D)</label>
+      <div class="sliderrow">
+        <button class="step" id="minus" aria-label="ลดความลึก 0.5 เมตร">&minus;</button>
+        <input id="depth" type="range" min="6" max="50" step="0.5" value="18" aria-label="ความลึกแกนอุโมงค์เป็นเมตร">
+        <button class="step" id="plus" aria-label="เพิ่มความลึก 0.5 เมตร">+</button>
+      </div>
+      <div class="scale"><span>6 ม.</span><span>24 ม. (จุดเปลี่ยนกฎ)</span><span>50 ม.</span></div>
+      <div class="depthval">D = <b id="dval">18.0</b> ม.</div>
+
+      <div class="presets" id="presets">
+        <button class="chip" data-d="12">12 ม.</button>
+        <button class="chip" data-d="18">18 ม.</button>
+        <button class="chip" data-d="24">24 ม.</button>
+        <button class="chip" data-d="30">30 ม.</button>
+        <button class="chip" data-d="40">40 ม.</button>
+      </div>
+
+      <div class="legend">
+        <span><i class="sw" style="border-top-color:var(--offset)"></i>offset ราบ 3.00 ม.</span>
+        <span><i class="sw" style="border-top-color:var(--infl)"></i>Zone of Influence</span>
+        <span><i class="sw" style="border-top-color:var(--amber);border-top-width:4px"></i>Protection Zone (ผิวดิน)</span>
+        <span><i class="sw" style="border-top-color:var(--thr);border-top-style:dashed"></i>ระดับ 24.00 ม.</span>
+        <span><i class="sw" style="border-top-color:var(--row);border-top-style:dashed"></i>ขอบเขตทาง (ROW)</span>
+      </div>
+    </section>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <h3><span class="dot" style="background:var(--shallow)"></span>กฎฝั่งขวา · ตื้น (D ≤ 24 ม.)</h3>
+      <p>จากเส้นขอบ (ROW) offset ออกไปในแนวราบ <b>3.00 ม.</b> ก่อน แล้วลาดขึ้นผิวดินด้วยความชัน <b>1:1</b> ตลอดความลึก</p>
+      <div class="formula">จากศูนย์กลาง = 3.00 + 3.00 + D<br>จากขอบ ROW = 3.00 + D</div>
+      <p>ยิ่งลึก เขตป้องกันยิ่งกว้างในสัดส่วน 1:1</p>
+    </div>
+    <div class="card">
+      <h3><span class="dot" style="background:var(--deep)"></span>กฎฝั่งซ้าย · ลึก (D &gt; 24 ม.)</h3>
+      <p>offset ราบ <b>3.00 ม.</b> ก่อนเช่นกัน จากนั้นช่วงล่าง (ลึกกว่า 24 ม.) ลาดชัน <b>2:1</b> และช่วงบน 24 ม. ลาด <b>1:1</b></p>
+      <div class="formula">จากศูนย์กลาง = 3.00 + 3.00 + [24 + (D−24)/2]<br>จากขอบ ROW = 3.00 + 24 + (D−24)/2</div>
+      <p>ที่ D = 24 ม. ทั้งสองกฎให้ค่าเท่ากันพอดี (ต่อเนื่องกัน)</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>โครงสร้างของแนว (ตามที่แก้):</b> ศูนย์กลางอุโมงค์ &rarr; 3.00 ม. ถึงเส้นขอบ ROW &rarr; <b>offset ราบออกไปอีก 3.00 ม.</b> &rarr; จึงเริ่มลาดขึ้นตาม Zone of Influence (1:1 หรือ 2:1+1:1) &rarr; ตัดผิวดินเป็นขอบเขตป้องกัน
+    <br><b>หมายเหตุ:</b> ค่าคงที่ (ROW 3.00, offset 3.00, ลาด 1:1/2:1, จุดเปลี่ยน 24 ม., อุโมงค์ 6.30 ม.) ถอดจากรูปที่อัปโหลด และวาดสมมาตรสองข้างของอุโมงค์เดี่ยว หากข้อกำหนดฉบับจริง (เช่น LTA/SRMEG) นิยาม “เส้นขอบ” เป็นขอบโครงสร้างอุโมงค์แทน ROW บอกได้ ปรับค่าเดียวได้ทันที
+  </div>
+
+  <footer>ไฟล์เดียว · ใช้งานออฟไลน์ได้ทั้งบน PC และมือถือ · ไม่ต้องเชื่อมต่ออินเทอร์เน็ต</footer>
 </div>
-</div>
+
 <script>
-const slider = document.getElementById('depthSlider');
-const depthValDisplay = document.getElementById('depthValue');
+(function(){
+  "use strict";
+  var ROW=3.00, OFFSET=3.00, BASE=ROW+OFFSET, R=3.15, TH=24, DMIN=6, DMAX=50;
+  var C={ink:'#16222E',soil:'#CBB187',soilHatch:'#B49865',sky:'#F4F8FB',
+         tunnel:'#26404F',tunnelFill:'#DCE4E8',row:'#5A6B78',offset:'#8A5CB4',
+         infl:'#1F6FB2',inflFill:'rgba(31,111,178,0.09)',
+         amber:'#E08A00',thr:'#C0392B',label:'#3A4A57',muted:'#7C8A96'};
 
-const calcResult =
+  // world: xM in [-48,46], yM in [-6,58]
+  var X0=48, Y0=6, S=10;
+  function X(m){return ((m+X0)*S).toFixed(1);}
+  function Y(m){return ((m+Y0)*S).toFixed(1);}
+  var W=(46+48)*S, H=(58+6)*S;
 
-document.getElementById('calculationResult');
+  function f(D){ return D<=TH ? D : TH + (D-TH)/2; }
 
-const canvas = document.getElementById('vizCanvas');
-const ctx = canvas.getContext('2d');
-const GROUND_Y = 50;
-const MAX_DEPTH = 50;
-const SCALE_Y = (canvas.height - GROUND_Y - 50) / MAX_DEPTH;
-const SCALE_X = 12;
-const ROW_X = 100;
-function drawVisualization() {
-const depth = parseFloat(slider.value);
-depthValDisplay.textContent = depth.toFixed(2) + ' ม.';
-ctx.clearRect(0, 0, canvas.width, canvas.height);
-ctx.fillStyle = '#fdfdfd';
-ctx.fillRect(0, 0, canvas.width, canvas.height);
-ctx.beginPath();
-ctx.moveTo(0, GROUND_Y);
-ctx.lineTo(canvas.width, GROUND_Y);
-ctx.strokeStyle = '#2c3e50';
-ctx.lineWidth = 3;
-ctx.stroke();
-ctx.beginPath();
-for(let i=0; i<canvas.width; i+=15) {
-ctx.moveTo(i, GROUND_Y);
-ctx.lineTo(i-10, GROUND_Y+10);
-}
-ctx.strokeStyle = '#95a5a6';
-ctx.lineWidth = 1;
-ctx.stroke();
-ctx.fillStyle = '#2c3e50';
-ctx.font = '12px sans-serif';
-ctx.fillText('ผิวดิน (Existing Ground Level)', 10, GROUND_Y
+  function line(x1,y1,x2,y2,stroke,w,dash){
+    return '<line x1="'+X(x1)+'" y1="'+Y(y1)+'" x2="'+X(x2)+'" y2="'+Y(y2)+'" stroke="'+stroke+'" stroke-width="'+w+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+' />';
+  }
+  function txt(x,y,s,o){
+    o=o||{};
+    return '<text x="'+X(x)+'" y="'+Y(y)+'" font-family="'+(o.mono?"'DejaVu Sans Mono',monospace":"var(--thai)")+'" font-size="'+(o.size||13)+'" fill="'+(o.fill||C.label)+'"'
+      +(o.weight?' font-weight="'+o.weight+'"':'')+' text-anchor="'+(o.anchor||'start')+'"'
+      +(o.baseline?' dominant-baseline="'+o.baseline+'"':'')
+      +(o.rotate?' transform="rotate('+o.rotate+' '+X(x)+' '+Y(y)+')"':'')+'>'+s+'</text>';
+  }
 
-- 10);
+  // influence boundary path, side=+1/-1: ROW@axis -> 3m offset -> slope base -> slope -> surface
+  function influencePath(side,D){
+    var p=[[side*ROW,D],[side*BASE,D]];   // horizontal offset shoulder
+    if(D<=TH){ p.push([side*(BASE+D),0]); }
+    else{ p.push([side*(BASE+(D-TH)/2),TH]); p.push([side*(BASE+(D-TH)/2+TH),0]); }
+    return p;
+  }
 
-ctx.beginPath();
-ctx.moveTo(ROW_X, GROUND_Y);
-ctx.lineTo(ROW_X, canvas.height - 20);
-ctx.setLineDash([5, 5]);
-ctx.strokeStyle = '#7f8c8d';
-ctx.stroke();
-ctx.setLineDash([]);
+  function render(D){
+    var spread=f(D), surf=BASE+spread, deep=D>TH;
+    var s='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ภาพตัดขวางเขตป้องกันอุโมงค์">';
 
-ctx.fillText('แนวเขตทาง (ROW)', ROW_X - 90, GROUND_Y + 50);
-const y24 = GROUND_Y + (24 * SCALE_Y);
-ctx.beginPath();
-ctx.moveTo(0, y24);
-ctx.lineTo(canvas.width, y24);
-ctx.setLineDash([10, 5, 2, 5]);
-ctx.strokeStyle = '#e74c3c';
-ctx.stroke();
-ctx.setLineDash([]);
-ctx.fillStyle = '#e74c3c';
-ctx.fillText('ระดับความลึก 24 เมตร', 10, y24 - 5);
-const yAxis = GROUND_Y + (depth * SCALE_Y);
-ctx.beginPath();
-ctx.moveTo(ROW_X - 50, yAxis);
-ctx.lineTo(canvas.width, yAxis);
-ctx.setLineDash([15, 5, 5, 5]);
-ctx.strokeStyle = '#2980b9';
-ctx.lineWidth = 2;
-ctx.stroke();
-ctx.setLineDash([]);
-ctx.fillStyle = '#2980b9';
-ctx.fillText(`ระดับแกนอุโมงค์ (Depth = ${depth.toFixed(2)} ม.)
+    s+='<rect x="0" y="0" width="'+W+'" height="'+Y(0)+'" fill="'+C.sky+'"/>';
+    s+='<rect x="0" y="'+Y(0)+'" width="'+W+'" height="'+(H-Y(0))+'" fill="'+C.soil+'" opacity="0.28"/>';
 
-`, ROW_X + 10, yAxis - 5);
-ctx.beginPath();
-ctx.arc(ROW_X, yAxis, 20, 0, 2*Math.PI);
-ctx.strokeStyle = '#34495e';
-ctx.stroke();
-let protectionWidth = 0;
-ctx.beginPath();
-ctx.moveTo(ROW_X, yAxis);
-if (depth <= 24) {
-protectionWidth = depth - 3.00;
-const endX = ROW_X + (protectionWidth * SCALE_X);
-ctx.lineTo(endX, GROUND_Y);
-ctx.strokeStyle = '#27ae60';
-calcResult.innerHTML = `<strong style="color:#27ae60">
+    // influence wedge fill both sides
+    [1,-1].forEach(function(side){
+      var p=influencePath(side,D);
+      var d='M '+X(side*ROW)+' '+Y(0);
+      p.forEach(function(pt){ d+=' L '+X(pt[0])+' '+Y(pt[1]); });
+      d+=' Z';
+      s+='<path d="'+d+'" fill="'+C.inflFill+'"/>';
+    });
 
-กรณีความลึก ≤ 24 เมตร (ฝั่งขวาของแบบ)</strong><br>
+    // threshold 24 m
+    s+=line(-48,TH,46,TH,C.thr,1.4,'7 5');
+    s+=txt(-46.5,TH-0.8,'24.00 ม.',{mono:true,size:12,fill:C.thr,weight:700});
 
-สูตร: ระยะป้องกัน = ความลึก -
+    // ground surface + hatch
+    s+=line(-48,0,46,0,C.ink,2.2);
+    var hatch='';
+    for(var hx=-47;hx<46;hx+=1.4){ hatch+=line(hx,0.05,hx+0.9,1.4,C.soilHatch,1.4); }
+    s+=hatch;
 
-3.00<br>
+    // influence lines + kink + offset shoulder highlight
+    [1,-1].forEach(function(side){
+      var p=influencePath(side,D);
+      // offset shoulder drawn in its own colour
+      s+=line(p[0][0],p[0][1],p[1][0],p[1][1],C.offset,3.2);
+      // slope part
+      var d='M '+X(p[1][0])+' '+Y(p[1][1]);
+      for(var i=2;i<p.length;i++) d+=' L '+X(p[i][0])+' '+Y(p[i][1]);
+      s+='<path d="'+d+'" fill="none" stroke="'+C.infl+'" stroke-width="2.4" stroke-linejoin="round"/>';
+      // slope base node
+      s+='<circle cx="'+X(p[1][0])+'" cy="'+Y(p[1][1])+'" r="3.2" fill="'+C.offset+'"/>';
+      if(deep){ s+='<circle cx="'+X(p[2][0])+'" cy="'+Y(p[2][1])+'" r="3.4" fill="#fff" stroke="'+C.infl+'" stroke-width="2"/>'; }
+    });
+    // slope tags (right side)
+    (function(){
+      var p=influencePath(1,D);
+      if(!deep){
+        var mx=(p[1][0]+p[2][0])/2, my=(p[1][1]+p[2][1])/2;
+        s+=txt(mx+1.2,my,'1:1',{mono:true,size:13,fill:C.infl,weight:700});
+      }else{
+        var lx=(p[2][0]+p[3][0])/2, ly=(p[2][1]+p[3][1])/2;
+        s+=txt(lx+1.2,ly,'1:1',{mono:true,size:13,fill:C.infl,weight:700});
+        var ux=(p[1][0]+p[2][0])/2, uy=(p[1][1]+p[2][1])/2;
+        s+=txt(ux+1.4,uy,'2:1',{mono:true,size:13,fill:C.infl,weight:700});
+      }
+    })();
 
-คํานวณ:
+    // offset dimension at axis level (right side)
+    var yo=D+2.2;
+    s+=line(ROW,D,ROW,yo+0.6,C.offset,1,'3 2');
+    s+=line(BASE,D,BASE,yo+0.6,C.offset,1,'3 2');
+    s+=line(ROW,yo,BASE,yo,C.offset,1.4);
+    s+=line(ROW,yo-0.5,ROW,yo+0.5,C.offset,1.4);
+    s+=line(BASE,yo-0.5,BASE,yo+0.5,C.offset,1.4);
+    s+=txt((ROW+BASE)/2,yo+1.8,'offset 3.00 ม.',{mono:true,size:11,fill:C.offset,anchor:'middle',weight:700});
 
-<strong>${depth.toFixed(2)} - 3.00 = ${protectionWidth.toFixed(2)} เมตร
-</strong>`;
+    // ROW vertical dashed lines
+    [1,-1].forEach(function(side){ s+=line(side*ROW,0,side*ROW,D,C.row,1.4,'5 4'); });
 
-} else {
-const xAt24 = ROW_X + (((depth - 24) / 2) * SCALE_X);
-ctx.lineTo(xAt24, y24);
-protectionWidth = 24 + ((depth - 24) / 2) - 3.00;
-const endX = ROW_X + (protectionWidth * SCALE_X);
-ctx.lineTo(endX, GROUND_Y);
-ctx.strokeStyle = '#8e44ad';
-calcResult.innerHTML = `<strong style="color:#8e44ad">
+    // tunnel centreline
+    s+=line(0,-2,0,D+R+3,C.tunnel,1.2,'2 3');
+    s+=txt(0,-2.5,'\u20B5',{mono:true,size:15,fill:C.tunnel,anchor:'middle'});
 
-กรณีความลึก > 24 เมตร (ฝั่งซ้ายของแบบ)</strong><br>
+    // tunnel
+    s+='<circle cx="'+X(0)+'" cy="'+Y(D)+'" r="'+(R*S)+'" fill="'+C.tunnelFill+'" stroke="'+C.tunnel+'" stroke-width="2.4"/>';
+    s+=line(-1,D,1,D,C.tunnel,1.5); s+=line(0,D-1,0,D+1,C.tunnel,1.5);
+    s+=line(-R,D-R-1.4,R,D-R-1.4,C.tunnel,1);
+    s+=line(-R,D-R-2,-R,D-R-0.8,C.tunnel,1); s+=line(R,D-R-2,R,D-R-0.8,C.tunnel,1);
+    s+=txt(0,D-R-2,'6.30 ม.',{mono:true,size:11,fill:C.tunnel,anchor:'middle'});
+    s+=txt(R+1,D,'แนวแกนอุโมงค์ (Tunnel Axis)',{size:12,fill:C.label,baseline:'middle'});
 
-สูตร: ระยะป้องกัน = 24 + ((ความลึก -
+    // amber protection strip on surface (ROW -> surface point)
+    [1,-1].forEach(function(side){
+      s+=line(side*ROW,0,side*surf,0,C.amber,5);
+      s+='<circle cx="'+X(side*surf)+'" cy="'+Y(0)+'" r="3.4" fill="'+C.amber+'"/>';
+    });
 
-24) / 2) - 3.00<br>
+    // top brackets
+    var yb=-3.8, tick=0.7;
+    function brk(x1,x2,y,color,label){
+      return line(x1,y,x2,y,color,1.6)+line(x1,y-tick,x1,y+tick,color,1.6)+line(x2,y-tick,x2,y+tick,color,1.6)
+        +txt((x1+x2)/2,y-0.9,label,{mono:true,size:11.5,fill:color,anchor:'middle',weight:700});
+    }
+    // centreline -> ROW (3.00) both sides
+    s+=brk(0,ROW,yb,C.row,'3.00');
+    s+=brk(-ROW,0,yb,C.row,'3.00');
+    // ROW -> surface (protection) both sides
+    s+=brk(ROW,surf,yb,C.amber,'Protection '+(OFFSET+spread).toFixed(2)+' ม.');
+    s+=brk(-surf,-ROW,yb,C.amber,'Protection '+(OFFSET+spread).toFixed(2)+' ม.');
 
-คํานวณ: 24 +
+    // depth dimension (outside left surface point)
+    var xd=-surf-2;
+    s+=line(xd,0,xd,D,C.ink,1.4);
+    s+=line(xd-0.8,0,xd+0.8,0,C.ink,1.4); s+=line(xd-0.8,D,xd+0.8,D,C.ink,1.4);
+    s+=txt(xd-1.2,D/2,'D = '+D.toFixed(1)+' ม.',{mono:true,size:12.5,fill:C.ink,anchor:'middle',weight:700,rotate:-90,baseline:'middle'});
 
-((${depth.toFixed(2)} - 24) / 2) - 3.00 =
-<strong>${protectionWidth.toFixed(2)} เมตร</strong>`;
+    // labels
+    s+=txt(-47.5,-0.8,'ระดับผิวดิน (Existing Ground Level)',{size:12,fill:C.label});
+    s+=txt(BASE+spread*0.5, deep?14:Math.min(D*0.55,12),'Zone of Influence',{size:11.5,fill:C.infl,weight:700});
 
-}
-ctx.lineWidth = 3;
-ctx.stroke();
-const endX = ROW_X + (protectionWidth * SCALE_X);
-const dimY = GROUND_Y - 25;
-ctx.beginPath();
-ctx.moveTo(ROW_X, GROUND_Y); ctx.lineTo(ROW_X, dimY - 10);
-ctx.moveTo(endX, GROUND_Y); ctx.lineTo(endX, dimY - 10);
-ctx.moveTo(ROW_X, dimY); ctx.lineTo(endX, dimY);
-ctx.lineTo(endX - 5, dimY - 5); ctx.moveTo(endX, dimY);
+    s+='</svg>';
+    return s;
+  }
 
-ctx.lineTo(endX - 5, dimY + 5);
+  var slider=document.getElementById('depth');
+  var box=document.getElementById('diagram');
+  function up(D){
+    D=Math.round(D*2)/2; if(D<DMIN)D=DMIN; if(D>DMAX)D=DMAX;
+    slider.value=D;
+    var spread=f(D), fromCentre=BASE+spread, fromRow=OFFSET+spread, deep=D>TH;
+    box.innerHTML=render(D);
 
-ctx.moveTo(ROW_X, dimY); ctx.lineTo(ROW_X + 5, dimY - 5);
+    document.getElementById('cval').textContent=fromCentre.toFixed(2);
+    document.getElementById('rval').textContent=fromRow.toFixed(2);
+    document.getElementById('dval').textContent=D.toFixed(1);
 
-ctx.moveTo(ROW_X, dimY); ctx.lineTo(ROW_X + 5, dimY + 5);
+    var mode=document.getElementById('mode');
+    if(deep){
+      mode.className='badge dp';
+      mode.textContent='โหมดลึก · กฎฝั่งซ้าย (D₂ > 24 ม.)';
+      document.getElementById('comp').textContent='= 3.00 (ROW) + 3.00 (offset) + [24 + ('+D.toFixed(1)+'−24)/2] = '+fromCentre.toFixed(2);
+    }else{
+      mode.className='badge sh';
+      mode.textContent='โหมดตื้น · กฎฝั่งขวา (D₁ ≤ 24 ม.)';
+      document.getElementById('comp').textContent='= 3.00 (ROW) + 3.00 (offset) + '+spread.toFixed(2)+' (ลาด 1:1) = '+fromCentre.toFixed(2);
+    }
+    var pct=((D-DMIN)/(DMAX-DMIN)*100).toFixed(1);
+    slider.style.background='linear-gradient(90deg,'+(deep?'#B4560A':'#1F7A54')+' 0 '+pct+'%, var(--line) '+pct+'% 100%)';
+    Array.prototype.forEach.call(document.querySelectorAll('.chip'),function(c){
+      c.setAttribute('aria-pressed', parseFloat(c.dataset.d)===D ? 'true':'false');
+    });
+  }
 
-ctx.strokeStyle = '#333';
-ctx.lineWidth = 1;
-ctx.stroke();
-ctx.fillStyle = '#000';
-ctx.textAlign = 'center';
-ctx.font = 'bold 14px sans-serif';
-ctx.fillText(`PROTECTION ZONE =
-
-${protectionWidth.toFixed(2)} m`, ROW_X + ((endX - ROW_X)/2), dimY -
-10);
-
-ctx.textAlign = 'left';
-}
-slider.addEventListener('input', drawVisualization);
-drawVisualization();
-
+  slider.addEventListener('input',function(){up(parseFloat(slider.value));});
+  document.getElementById('minus').addEventListener('click',function(){up(parseFloat(slider.value)-0.5);});
+  document.getElementById('plus').addEventListener('click',function(){up(parseFloat(slider.value)+0.5);});
+  document.getElementById('presets').addEventListener('click',function(e){
+    var c=e.target.closest('.chip'); if(c) up(parseFloat(c.dataset.d));
+  });
+  up(18);
+})();
 </script>
 </body>
 </html>
