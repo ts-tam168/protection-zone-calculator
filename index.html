@@ -1,180 +1,225 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <title>เครื่องมือคำนวณเขตความปลอดภัย (Protection Zone Calculator)</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f4f7f6; color: #333; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #2c3e50; }
-        .controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding: 15px; background-color: #eef2f5; border-radius: 8px; }
-        .slider-container { flex-grow: 1; margin: 0 20px; }
-        input[type=range] { width: 100%; cursor: pointer; }
-        .value-display { font-size: 1.2em; font-weight: bold; color: #2980b9; min-width: 120px; text-align: right; }
-        .results { background-color: #f8f9fa; border-left: 4px solid #27ae60; padding: 15px; margin-bottom: 20px; font-size: 1.1em; }
-        canvas { border: 1px solid #bdc3c7; background-color: #ffffff; width: 100%; border-radius: 4px; box-shadow: inset 0 0 5px rgba(0,0,0,0.05); }
-        .instructions { margin-top: 20px; font-size: 0.9em; color: #7f8c8d; }
-    </style>
+<meta charset="UTF-8">
+<title>เครื่องมือคํานวณเขตความปลอดภัย (Protection Zone
+Calculator)</title>
+<style>
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana,
+sans-serif; padding: 20px; background-color: #f4f7f6; color: #333; }
+.container { max-width: 800px; margin: 0 auto; background:
+white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px
+rgba(0,0,0,0.1); }
+
+h1 { text-align: center; color: #2c3e50; }
+.controls { display: flex; align-items: center;
+
+justify-content: space-between; margin-bottom: 20px; padding: 15px;
+background-color: #eef2f5; border-radius: 8px; }
+
+.slider-container { flex-grow: 1; margin: 0 20px; }
+
+input[type=range] { width: 100%; cursor: pointer; }
+.value-display { font-size: 1.2em; font-weight: bold; color:
+
+#2980b9; min-width: 120px; text-align: right; }
+
+.results { background-color: #f8f9fa; border-left: 4px solid
+#27ae60; padding: 15px; margin-bottom: 20px; font-size: 1.1em; }
+canvas { border: 1px solid #bdc3c7; background-color: #ffffff;
+
+width: 100%; border-radius: 4px; box-shadow: inset 0 0 5px
+rgba(0,0,0,0.05); }
+
+.instructions { margin-top: 20px; font-size: 0.9em; color:
+
+#7f8c8d; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>จำลองการคำนวณระยะเขตความปลอดภัย (Protection Zone)</h1>
-        
-        <div class="controls">
-            <label for="depthSlider"><strong>ปรับความลึกแกนอุโมงค์ (Depth):</strong></label>
-            <div class="slider-container">
-                <input type="range" id="depthSlider" min="5" max="50" step="0.5" value="20">
-            </div>
-            <div class="value-display" id="depthValue">20.00 ม.</div>
-        </div>
+<div class="container">
+<h1>จําลองการคํานวณระยะเขตความปลอดภัย (Protection Zone)</h1>
+<div class="controls">
+<label for="depthSlider"><strong>ปรับความลึกแกนอุโมงค์
 
-        <div class="results" id="calculationResult">
-            กำลังคำนวณ...
-        </div>
+(Depth):</strong></label>
 
-        <canvas id="vizCanvas" width="740" height="500"></canvas>
+<div class="slider-container">
+<input type="range" id="depthSlider" min="5" max="50"
 
-        <div class="instructions">
-            <p><strong>หลักการอ้างอิงจากแบบแปลนวิศวกรรม:</strong></p>
-            <ul>
-                <li><span style="color:#e74c3c">กรณีความลึก &le; 24 เมตร:</span> เส้นขอบเขตความปลอดภัยลาดชัน 1:1 ไปถึงระดับผิวดิน (ระยะขอบเขตบนผิวดิน = ความลึก)</li>
-                <li><span style="color:#2980b9">กรณีความลึก &gt; 24 เมตร:</span> เส้นขอบเขตความปลอดภัยลาดชัน 2:1 จนถึงระดับความลึก -24 เมตร จากนั้นเปลี่ยนความลาดชันเป็น 1:1 (ระยะขอบเขตบนผิวดิน = 24 + (ความลึก - 24) / 2)</li>
-            </ul>
-        </div>
-    </div>
+step="0.5" value="20">
+</div>
+<div class="value-display" id="depthValue">20.00 ม.</div>
+</div>
+<div class="results" id="calculationResult">
+กําลังคํานวณ...
+</div>
+<canvas id="vizCanvas" width="740" height="500"></canvas>
+<div class="instructions">
+<p><strong>หลักการอ้างอิงจากแบบแปลนวิศวกรรม:</strong></p>
+<ul>
+<li><span style="color:#e74c3c">กรณีความลึก ≤ 24 เมตร:
+</span> เส้นขอบเขตความปลอดภัยลาดชัน 1:1 ไปถึงระดับผิวดิน (ระยะขอบเขตบนผิวดิน = ความ
+ลึก)</li>
 
-    <script>
-        const slider = document.getElementById('depthSlider');
-        const depthValDisplay = document.getElementById('depthValue');
-        const calcResult = document.getElementById('calculationResult');
-        const canvas = document.getElementById('vizCanvas');
-        const ctx = canvas.getContext('2d');
+<li><span style="color:#2980b9">กรณีความลึก > 24 เมตร:
+</span> เส้นขอบเขตความปลอดภัยลาดชัน 2:1 จนถึงระดับความลึก -24 เมตร จากนั้นเปลี่ยน
+ความลาดชันเป็น 1:1 (ระยะขอบเขตบนผิวดิน = 24 + (ความลึก - 24) / 2)</li>
 
-        const GROUND_Y = 50;
-        const MAX_DEPTH = 50;
-        const SCALE_Y = (canvas.height - GROUND_Y - 50) / MAX_DEPTH;
-        const SCALE_X = 12; 
-        const ROW_X = 100; 
+</ul>
+</div>
+</div>
+<script>
+const slider = document.getElementById('depthSlider');
+const depthValDisplay = document.getElementById('depthValue');
 
-        function drawVisualization() {
-            const depth = parseFloat(slider.value);
-            depthValDisplay.textContent = depth.toFixed(2) + ' ม.';
+const calcResult =
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+document.getElementById('calculationResult');
 
-            ctx.fillStyle = '#fdfdfd';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.beginPath();
-            ctx.moveTo(0, GROUND_Y);
-            ctx.lineTo(canvas.width, GROUND_Y);
-            ctx.strokeStyle = '#2c3e50';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            
-            ctx.beginPath();
-            for(let i=0; i<canvas.width; i+=15) {
-                ctx.moveTo(i, GROUND_Y);
-                ctx.lineTo(i-10, GROUND_Y+10);
-            }
-            ctx.strokeStyle = '#95a5a6';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-            
-            ctx.fillStyle = '#2c3e50';
-            ctx.font = '12px sans-serif';
-            ctx.fillText('ผิวดิน (Existing Ground Level)', 10, GROUND_Y - 10);
+const canvas = document.getElementById('vizCanvas');
+const ctx = canvas.getContext('2d');
+const GROUND_Y = 50;
+const MAX_DEPTH = 50;
+const SCALE_Y = (canvas.height - GROUND_Y - 50) / MAX_DEPTH;
+const SCALE_X = 12;
+const ROW_X = 100;
+function drawVisualization() {
+const depth = parseFloat(slider.value);
+depthValDisplay.textContent = depth.toFixed(2) + ' ม.';
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+ctx.fillStyle = '#fdfdfd';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+ctx.beginPath();
+ctx.moveTo(0, GROUND_Y);
+ctx.lineTo(canvas.width, GROUND_Y);
+ctx.strokeStyle = '#2c3e50';
+ctx.lineWidth = 3;
+ctx.stroke();
+ctx.beginPath();
+for(let i=0; i<canvas.width; i+=15) {
+ctx.moveTo(i, GROUND_Y);
+ctx.lineTo(i-10, GROUND_Y+10);
+}
+ctx.strokeStyle = '#95a5a6';
+ctx.lineWidth = 1;
+ctx.stroke();
+ctx.fillStyle = '#2c3e50';
+ctx.font = '12px sans-serif';
+ctx.fillText('ผิวดิน (Existing Ground Level)', 10, GROUND_Y
 
-            ctx.beginPath();
-            ctx.moveTo(ROW_X, GROUND_Y);
-            ctx.lineTo(ROW_X, canvas.height - 20);
-            ctx.setLineDash([5, 5]);
-            ctx.strokeStyle = '#7f8c8d';
-            ctx.stroke();
-            ctx.setLineDash([]);
-            ctx.fillText('แนวเขตทาง (ROW)', ROW_X - 90, GROUND_Y + 50);
+- 10);
 
-            const y24 = GROUND_Y + (24 * SCALE_Y);
-            ctx.beginPath();
-            ctx.moveTo(0, y24);
-            ctx.lineTo(canvas.width, y24);
-            ctx.setLineDash([10, 5, 2, 5]);
-            ctx.strokeStyle = '#e74c3c';
-            ctx.stroke();
-            ctx.setLineDash([]);
-            ctx.fillStyle = '#e74c3c';
-            ctx.fillText('ระดับความลึก 24 เมตร', 10, y24 - 5);
+ctx.beginPath();
+ctx.moveTo(ROW_X, GROUND_Y);
+ctx.lineTo(ROW_X, canvas.height - 20);
+ctx.setLineDash([5, 5]);
+ctx.strokeStyle = '#7f8c8d';
+ctx.stroke();
+ctx.setLineDash([]);
 
-            const yAxis = GROUND_Y + (depth * SCALE_Y);
-            ctx.beginPath();
-            ctx.moveTo(ROW_X - 50, yAxis);
-            ctx.lineTo(canvas.width, yAxis);
-            ctx.setLineDash([15, 5, 5, 5]);
-            ctx.strokeStyle = '#2980b9';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            ctx.setLineDash([]);
-            ctx.fillStyle = '#2980b9';
-            ctx.fillText(`ระดับแกนอุโมงค์ (Depth = ${depth.toFixed(2)} ม.)`, ROW_X + 10, yAxis - 5);
+ctx.fillText('แนวเขตทาง (ROW)', ROW_X - 90, GROUND_Y + 50);
+const y24 = GROUND_Y + (24 * SCALE_Y);
+ctx.beginPath();
+ctx.moveTo(0, y24);
+ctx.lineTo(canvas.width, y24);
+ctx.setLineDash([10, 5, 2, 5]);
+ctx.strokeStyle = '#e74c3c';
+ctx.stroke();
+ctx.setLineDash([]);
+ctx.fillStyle = '#e74c3c';
+ctx.fillText('ระดับความลึก 24 เมตร', 10, y24 - 5);
+const yAxis = GROUND_Y + (depth * SCALE_Y);
+ctx.beginPath();
+ctx.moveTo(ROW_X - 50, yAxis);
+ctx.lineTo(canvas.width, yAxis);
+ctx.setLineDash([15, 5, 5, 5]);
+ctx.strokeStyle = '#2980b9';
+ctx.lineWidth = 2;
+ctx.stroke();
+ctx.setLineDash([]);
+ctx.fillStyle = '#2980b9';
+ctx.fillText(`ระดับแกนอุโมงค์ (Depth = ${depth.toFixed(2)} ม.)
 
-            ctx.beginPath();
-            ctx.arc(ROW_X, yAxis, 20, 0, 2*Math.PI);
-            ctx.strokeStyle = '#34495e';
-            ctx.stroke();
+`, ROW_X + 10, yAxis - 5);
+ctx.beginPath();
+ctx.arc(ROW_X, yAxis, 20, 0, 2*Math.PI);
+ctx.strokeStyle = '#34495e';
+ctx.stroke();
+let protectionWidth = 0;
+ctx.beginPath();
+ctx.moveTo(ROW_X, yAxis);
+if (depth <= 24) {
+protectionWidth = depth - 3.00;
+const endX = ROW_X + (protectionWidth * SCALE_X);
+ctx.lineTo(endX, GROUND_Y);
+ctx.strokeStyle = '#27ae60';
+calcResult.innerHTML = `<strong style="color:#27ae60">
 
-            let protectionWidth = 0;
-            ctx.beginPath();
-            ctx.moveTo(ROW_X, yAxis);
+กรณีความลึก ≤ 24 เมตร (ฝั่งขวาของแบบ)</strong><br>
 
-            if (depth <= 24) {
-                protectionWidth = depth;
-                const endX = ROW_X + (protectionWidth * SCALE_X);
-                ctx.lineTo(endX, GROUND_Y);
-                ctx.strokeStyle = '#27ae60';
-                
-                calcResult.innerHTML = `<strong style="color:#27ae60">กรณีความลึก &le; 24 เมตร (ฝั่งขวาของแบบ)</strong><br>
-                                        สูตร: ระยะป้องกัน = ความลึก<br>
-                                        คำนวณ: <strong>${depth.toFixed(2)} เมตร</strong>`;
-            } else {
-                const xAt24 = ROW_X + (((depth - 24) / 2) * SCALE_X);
-                ctx.lineTo(xAt24, y24); 
-                
-                protectionWidth = 24 + ((depth - 24) / 2);
-                const endX = ROW_X + (protectionWidth * SCALE_X);
-                ctx.lineTo(endX, GROUND_Y); 
-                ctx.strokeStyle = '#8e44ad';
-                
-                calcResult.innerHTML = `<strong style="color:#8e44ad">กรณีความลึก &gt; 24 เมตร (ฝั่งซ้ายของแบบ)</strong><br>
-                                        สูตร: ระยะป้องกัน = 24 + ((ความลึก - 24) / 2)<br>
-                                        คำนวณ: 24 + ((${depth.toFixed(2)} - 24) / 2) = <strong>${protectionWidth.toFixed(2)} เมตร</strong>`;
-            }
-            
-            ctx.lineWidth = 3;
-            ctx.stroke();
+สูตร: ระยะป้องกัน = ความลึก -
 
-            const endX = ROW_X + (protectionWidth * SCALE_X);
-            const dimY = GROUND_Y - 25;
-            
-            ctx.beginPath();
-            ctx.moveTo(ROW_X, GROUND_Y); ctx.lineTo(ROW_X, dimY - 10);
-            ctx.moveTo(endX, GROUND_Y); ctx.lineTo(endX, dimY - 10);
-            ctx.moveTo(ROW_X, dimY); ctx.lineTo(endX, dimY);
-            ctx.lineTo(endX - 5, dimY - 5); ctx.moveTo(endX, dimY); ctx.lineTo(endX - 5, dimY + 5);
-            ctx.moveTo(ROW_X, dimY); ctx.lineTo(ROW_X + 5, dimY - 5); ctx.moveTo(ROW_X, dimY); ctx.lineTo(ROW_X + 5, dimY + 5);
-            
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 1;
-            ctx.stroke();
+3.00<br>
 
-            ctx.fillStyle = '#000';
-            ctx.textAlign = 'center';
-            ctx.font = 'bold 14px sans-serif';
-            ctx.fillText(`PROTECTION ZONE = ${protectionWidth.toFixed(2)} m`, ROW_X + ((endX - ROW_X)/2), dimY - 10);
-            ctx.textAlign = 'left';
-        }
+คํานวณ:
 
-        slider.addEventListener('input', drawVisualization);
-        drawVisualization(); 
-    </script>
+<strong>${depth.toFixed(2)} - 3.00 = ${protectionWidth.toFixed(2)} เมตร
+</strong>`;
+
+} else {
+const xAt24 = ROW_X + (((depth - 24) / 2) * SCALE_X);
+ctx.lineTo(xAt24, y24);
+protectionWidth = 24 + ((depth - 24) / 2) - 3.00;
+const endX = ROW_X + (protectionWidth * SCALE_X);
+ctx.lineTo(endX, GROUND_Y);
+ctx.strokeStyle = '#8e44ad';
+calcResult.innerHTML = `<strong style="color:#8e44ad">
+
+กรณีความลึก > 24 เมตร (ฝั่งซ้ายของแบบ)</strong><br>
+
+สูตร: ระยะป้องกัน = 24 + ((ความลึก -
+
+24) / 2) - 3.00<br>
+
+คํานวณ: 24 +
+
+((${depth.toFixed(2)} - 24) / 2) - 3.00 =
+<strong>${protectionWidth.toFixed(2)} เมตร</strong>`;
+
+}
+ctx.lineWidth = 3;
+ctx.stroke();
+const endX = ROW_X + (protectionWidth * SCALE_X);
+const dimY = GROUND_Y - 25;
+ctx.beginPath();
+ctx.moveTo(ROW_X, GROUND_Y); ctx.lineTo(ROW_X, dimY - 10);
+ctx.moveTo(endX, GROUND_Y); ctx.lineTo(endX, dimY - 10);
+ctx.moveTo(ROW_X, dimY); ctx.lineTo(endX, dimY);
+ctx.lineTo(endX - 5, dimY - 5); ctx.moveTo(endX, dimY);
+
+ctx.lineTo(endX - 5, dimY + 5);
+
+ctx.moveTo(ROW_X, dimY); ctx.lineTo(ROW_X + 5, dimY - 5);
+
+ctx.moveTo(ROW_X, dimY); ctx.lineTo(ROW_X + 5, dimY + 5);
+
+ctx.strokeStyle = '#333';
+ctx.lineWidth = 1;
+ctx.stroke();
+ctx.fillStyle = '#000';
+ctx.textAlign = 'center';
+ctx.font = 'bold 14px sans-serif';
+ctx.fillText(`PROTECTION ZONE =
+
+${protectionWidth.toFixed(2)} m`, ROW_X + ((endX - ROW_X)/2), dimY -
+10);
+
+ctx.textAlign = 'left';
+}
+slider.addEventListener('input', drawVisualization);
+drawVisualization();
+
+</script>
 </body>
 </html>
