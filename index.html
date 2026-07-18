@@ -1,346 +1,1793 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>เขตพื้นที่ป้องกันโครงสร้างรถไฟฟ้าใต้ดิน (MRT Protection Zone)</title>
+<title>การทรุดตัวผิวดินจากการขุดอุโมงค์ด้วย TBM — สื่อการเรียนรู้ + เครื่องคำนวณ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <style>
-  :root{
-    --ink:#16222E; --paper:#EEF2F5; --card:#FFFFFF; --line:#D5DEE4;
-    --soil:#CBB187; --sky:#F4F8FB;
-    --tunnel:#26404F; --row:#5A6B78; --offset:#8A5CB4;
-    --infl:#1F6FB2; --amber:#E08A00; --thr:#C0392B;
-    --label:#3A4A57; --muted:#7C8A96;
-    --shallow:#1F7A54; --deep:#B4560A;
-    --mono:'DejaVu Sans Mono','SF Mono',Consolas,'Roboto Mono',monospace;
-    --thai:'Sarabun','Leelawadee UI','Segoe UI',Tahoma,'Noto Sans Thai',system-ui,sans-serif;
+:root{
+  --sky:#EDF0F4; --paper:#FBFCFD; --paper2:#F4F6F9;
+  --deep:#14243B; --deep2:#1E3350; --deep3:#26436A;
+  --ink:#14202E; --muted:#5C6E80; --faint:#8496A6;
+  --line:#D7DEE6; --line2:#C3CDD8;
+  --accent:#E4A11B; --accent-d:#BE7C0E; --accent-l:#F6D690;
+  --water:#2E9BC7; --water-l:#BDE3F0;
+  --danger:#D2503C;
+  --coarse:#E4C87C; --fine:#B07A50; --mixed:#8FA98A; --fill:#CABFA6; --rock:#7E8CA2;
+  --r:14px; --r-s:9px;
+  --shadow:0 1px 2px rgba(20,36,59,.05),0 8px 24px -12px rgba(20,36,59,.18);
+  --shadow-l:0 2px 4px rgba(20,36,59,.06),0 20px 48px -20px rgba(20,36,59,.28);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; -webkit-text-size-adjust:100%; text-size-adjust:100%}
+body{
+  margin:0; background:var(--sky); color:var(--ink);
+  font-family:"IBM Plex Sans Thai",system-ui,sans-serif;
+  font-size:16.5px; line-height:1.72; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{line-height:1.25; font-weight:600; letter-spacing:-.01em}
+p{margin:0 0 1em}
+a{color:var(--deep3); text-decoration:none}
+.mono{font-family:"IBM Plex Mono",monospace}
+.eyebrow{
+  font-family:"Space Grotesk","IBM Plex Sans Thai",sans-serif;
+  font-weight:600; font-size:12.5px; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--accent-d);
+}
+.wrap{max-width:1140px; margin:0 auto; padding:0 22px}
+.small{font-size:14px} .muted{color:var(--muted)}
+
+/* ---- nav ---- */
+.nav{
+  position:sticky; top:0; z-index:50; background:rgba(20,36,59,.92);
+  backdrop-filter:blur(10px); border-bottom:1px solid rgba(255,255,255,.08);
+}
+.nav-in{max-width:1140px; margin:0 auto; padding:11px 22px; display:flex; align-items:center; gap:20px}
+.brand{display:flex; align-items:center; gap:10px; color:#fff; font-weight:600; font-size:15px; white-space:nowrap}
+.brand .dot{width:26px;height:26px;border-radius:7px;background:linear-gradient(150deg,var(--accent),var(--accent-d));display:grid;place-items:center;flex:none}
+.brand .dot svg{width:15px;height:15px}
+.nav-links{display:flex; gap:3px; margin-left:auto; overflow-x:auto; scrollbar-width:none}
+.nav-links::-webkit-scrollbar{display:none}
+.nav-links a{color:#C4D0DE; font-size:13.5px; padding:6px 11px; border-radius:8px; white-space:nowrap; transition:.15s}
+.nav-links a:hover{color:#fff; background:rgba(255,255,255,.08)}
+
+/* ---- hero ---- */
+.hero{position:relative; overflow:hidden; background:linear-gradient(180deg,var(--deep) 0%,var(--deep2) 60%,#24405f 100%); color:#EAF0F6}
+.hero-in{max-width:1140px; margin:0 auto; padding:64px 22px 0; position:relative; z-index:2}
+.hero h1{font-size:clamp(28px,5vw,50px); color:#fff; margin:.15em 0 .35em; max-width:14ch; font-weight:700}
+.hero .lead{font-size:clamp(16px,2.1vw,19px); color:#B9C7D6; max-width:60ch; margin-bottom:26px}
+.hero-stats{display:flex; flex-wrap:wrap; gap:12px 30px; margin:26px 0 8px; padding-top:22px; border-top:1px solid rgba(255,255,255,.12)}
+.hstat{display:flex; flex-direction:column}
+.hstat b{font-family:"Space Grotesk",sans-serif; font-size:24px; color:var(--accent-l); font-weight:600}
+.hstat span{font-size:12.5px; color:#94A6B8; letter-spacing:.02em}
+.hero-fig{margin:34px -22px 0; position:relative}
+.hero-fig svg{display:block; width:100%; height:auto}
+.cta-row{display:flex; gap:12px; flex-wrap:wrap; margin-top:4px}
+.btn{
+  display:inline-flex; align-items:center; gap:8px; padding:12px 20px; border-radius:11px;
+  font-family:inherit; font-size:15px; font-weight:600; cursor:pointer; border:1px solid transparent; transition:.16s;
+}
+.btn-a{background:linear-gradient(160deg,var(--accent),var(--accent-d)); color:#2A1C02; box-shadow:0 6px 18px -6px rgba(228,161,27,.6)}
+.btn-a:hover{transform:translateY(-1px); box-shadow:0 10px 24px -8px rgba(228,161,27,.7)}
+.btn-g{background:rgba(255,255,255,.08); color:#EAF0F6; border-color:rgba(255,255,255,.18)}
+.btn-g:hover{background:rgba(255,255,255,.14)}
+
+/* ---- sections ---- */
+section{padding:60px 0}
+.sec-head{max-width:760px; margin-bottom:34px}
+.sec-head h2{font-size:clamp(23px,3.4vw,33px); margin:.25em 0 .3em}
+.sec-head p{color:var(--muted); font-size:16.5px}
+.grid{display:grid; gap:20px}
+.g2{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:repeat(3,1fr)}
+.card{background:var(--paper); border:1px solid var(--line); border-radius:var(--r); padding:26px; box-shadow:var(--shadow)}
+.card h3{font-size:19px; margin:0 0 .5em; display:flex; align-items:center; gap:10px}
+.tag{display:inline-flex; align-items:center; padding:3px 9px; border-radius:20px; font-size:12px; font-weight:600; font-family:"IBM Plex Mono",monospace; letter-spacing:.02em}
+.num-chip{width:30px;height:30px;border-radius:8px;background:var(--deep);color:#fff;display:grid;place-items:center;font-family:"Space Grotesk";font-weight:700;font-size:15px;flex:none}
+.eq{background:var(--paper2); border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:10px; padding:14px 18px; margin:14px 0; overflow-x:auto}
+.eq .lbl{font-family:"IBM Plex Mono";font-size:12px;color:var(--faint);float:right}
+.def-list{margin:10px 0 0; padding:0; list-style:none; font-size:14.5px}
+.def-list li{padding:5px 0; border-top:1px dashed var(--line); display:flex; gap:12px}
+.def-list li:first-child{border-top:none}
+.def-list b{font-family:"IBM Plex Mono"; color:var(--deep3); min-width:52px; flex:none}
+
+/* tables */
+.tbl-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:12px; margin-top:8px}
+table{border-collapse:collapse; width:100%; font-size:14px; min-width:480px}
+th,td{padding:10px 13px; text-align:left; border-bottom:1px solid var(--line)}
+thead th{background:var(--deep); color:#DCE6F0; font-weight:500; font-size:12.5px; letter-spacing:.03em}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:nth-child(even){background:var(--paper2)}
+td.num,th.num{font-family:"IBM Plex Mono"; text-align:right}
+
+.pill{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+
+/* project cards */
+.proj{display:flex; flex-direction:column; gap:2px}
+.proj .kv{display:flex; justify-content:space-between; padding:7px 0; border-top:1px dashed var(--line); font-size:14px}
+.proj .kv:first-of-type{border-top:none}
+.proj .kv b{font-family:"IBM Plex Mono"; color:var(--deep3)}
+
+.callout{background:linear-gradient(120deg,#FBF3E0,#FDF8EC); border:1px solid var(--accent-l); border-radius:12px; padding:18px 20px; margin-top:8px; font-size:15px}
+.callout .eyebrow{display:block;margin-bottom:6px}
+
+/* ============ CALCULATOR ============ */
+.calc-sec{background:var(--deep); color:#E7EEF5}
+.calc-sec .sec-head h2{color:#fff}
+.calc-sec .sec-head p{color:#A9BACb}
+.calc{display:grid; grid-template-columns:340px 1fr; gap:20px; align-items:start}
+.panel{background:#1B2E48; border:1px solid rgba(255,255,255,.1); border-radius:var(--r); padding:18px}
+.panel h4{margin:0 0 12px; font-size:13px; letter-spacing:.08em; text-transform:uppercase; color:#8FA6BE; font-family:"Space Grotesk"; font-weight:600}
+.panel-note{margin:-6px 0 12px; font-size:11.5px; color:#93A7BC; line-height:1.5}
+.panel-note b{color:#C4D3E2}
+.panel + .panel{margin-top:16px}
+.field{margin-bottom:13px}
+.field label{display:block; font-size:13px; color:#B7C6D6; margin-bottom:5px}
+.field label .v{float:right; font-family:"IBM Plex Mono"; color:var(--accent-l)}
+input[type=range]{width:100%; accent-color:var(--accent); height:4px; cursor:pointer}
+input[type=number],select{
+  width:100%; background:#0F1F33; border:1px solid rgba(255,255,255,.16); color:#EAF2FA;
+  border-radius:8px; padding:8px 10px; font-family:"IBM Plex Mono"; font-size:13.5px;
+}
+select{font-family:"IBM Plex Sans Thai"}
+input:focus,select:focus{outline:2px solid var(--accent); outline-offset:0; border-color:transparent}
+.seg{display:flex; gap:5px; background:#0F1F33; padding:4px; border-radius:10px}
+.seg button{flex:1; padding:8px 4px; border:none; background:transparent; color:#9FB2C6; border-radius:7px; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:500; transition:.14s}
+.seg button.on{background:var(--accent); color:#241802; font-weight:600}
+.preset-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.preset{padding:10px 8px; background:#0F1F33; border:1px solid rgba(255,255,255,.12); border-radius:9px; cursor:pointer; color:#C4D3E2; font-family:inherit; font-size:12.5px; display:flex; flex-direction:column; align-items:center; gap:6px; transition:.14s}
+.preset:hover{border-color:var(--accent); color:#fff}
+.preset.on{border-color:var(--accent); background:#2A2410; color:#fff}
+.preset svg{width:38px;height:26px}
+
+/* tunnel + soil rows */
+.trow,.srow{background:#132539; border:1px solid rgba(255,255,255,.09); border-radius:9px; padding:9px; margin-bottom:8px; font-size:12.5px}
+.trow-1{display:grid; grid-template-columns:20px 1fr 1fr 1fr 24px; gap:7px; align-items:center}
+.trow-2{display:flex; align-items:center; gap:8px; margin-top:8px; padding-top:8px; border-top:1px dashed rgba(255,255,255,.10); flex-wrap:wrap}
+.trow-2 input{width:72px}
+.srow-top{display:flex; gap:7px; align-items:center}
+.srow-top select{flex:1; min-width:0}
+.srow-params{display:flex; align-items:center; gap:10px 12px; flex-wrap:wrap; margin-top:9px}
+.pf{display:flex; align-items:center; gap:5px; color:#8FA6BE; white-space:nowrap}
+.pf input{width:60px}
+.pf .u{font-size:10px; color:#7C90A6}
+.kbadge{margin-left:auto; font-size:11px; padding:3px 10px; border-radius:20px; font-weight:600; white-space:nowrap}
+.kbadge.coarse{background:rgba(228,200,124,.15); color:#E8CE8E; border:1px solid rgba(228,200,124,.4)}
+.kbadge.fine{background:rgba(176,122,80,.18); color:#D89B72; border:1px solid rgba(176,122,80,.45)}
+.kbadge.mixed{background:rgba(143,166,190,.15); color:#AEC2D6; border:1px solid rgba(143,166,190,.4)}
+.trow .t-lab{width:20px;height:20px;border-radius:5px;display:grid;place-items:center;font-family:"Space Grotesk";font-weight:700;font-size:11px;color:#fff}
+.mini{font-size:10.5px; color:#8298AE; display:block; margin-bottom:2px}
+.trow input,.srow input,.srow select{padding:5px 7px; font-size:12px}
+.x-btn{background:rgba(210,80,60,.18); border:none; color:#E88; border-radius:6px; cursor:pointer; width:24px;height:26px; font-size:15px}
+.x-btn:hover{background:rgba(210,80,60,.35)}
+.add-btn{width:100%; padding:9px; background:transparent; border:1px dashed rgba(255,255,255,.25); color:#A9BACb; border-radius:9px; cursor:pointer; font-family:inherit; font-size:13px; margin-top:2px}
+.add-btn:hover{border-color:var(--accent); color:#fff}
+
+/* stage board */
+.stage-view{background:#1B2E48; border:1px solid rgba(255,255,255,.1); border-radius:var(--r); overflow:hidden}
+.sv-top{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 16px; border-bottom:1px solid rgba(255,255,255,.09); flex-wrap:wrap}
+.sv-top .title{font-weight:600; font-size:15px; color:#fff}
+.readout{display:flex; gap:16px; flex-wrap:wrap; font-family:"IBM Plex Mono"; font-size:12px}
+.readout div{display:flex; flex-direction:column}
+.readout span{color:#7E93A8; font-size:10px; letter-spacing:.04em}
+.readout b{color:var(--accent-l); font-size:14px; font-weight:500}
+.diagram{position:relative; background:linear-gradient(180deg,#EAF1F7 0%,#EAF1F7 var(--gl,32%),#0000 var(--gl,32%))}
+#svgSection{display:block; width:100%; height:auto; touch-action:none; cursor:grab}
+#svgSection.drag{cursor:grabbing}
+.hint{display:none}
+.sv-caption{padding:9px 14px; font-size:12px; color:#A9BACb; background:#12233A; border-top:1px solid rgba(255,255,255,.07); font-family:"IBM Plex Sans Thai"}
+.livebox{position:absolute; pointer-events:none; background:var(--deep); color:#fff; border:1px solid var(--accent); border-radius:8px; padding:6px 9px; font-family:"IBM Plex Mono"; font-size:11px; line-height:1.5; opacity:0; transition:opacity .1s; white-space:nowrap; z-index:5}
+.sv-values{display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; padding:11px 14px; background:#12233A; border-top:1px solid rgba(255,255,255,.08)}
+.sv-values .svv-label{font-size:11.5px; color:#8FA6BE; font-family:"Space Grotesk"; font-weight:600}
+.sv-values .svv{font-size:12.5px; font-family:"IBM Plex Sans Thai"; color:#C4D3E2}
+.sv-values .svv b{font-family:"IBM Plex Mono"; font-size:13.5px}
+.sv-values .svv.comb{margin-left:auto; padding:3px 11px; border-radius:20px; background:rgba(228,161,27,.15); border:1px solid rgba(228,161,27,.45); color:#F0C89B}
+
+.results{margin-top:16px; background:#1B2E48; border:1px solid rgba(255,255,255,.1); border-radius:var(--r); padding:18px}
+.results h4{margin:0 0 12px; font-size:13px; letter-spacing:.08em; text-transform:uppercase; color:#8FA6BE; font-family:"Space Grotesk"; font-weight:600}
+.res-tbl{width:100%; min-width:0; font-size:13px}
+.res-tbl th,.res-tbl td{border-color:rgba(255,255,255,.1); color:#D6E2EE; padding:9px 10px}
+.res-tbl thead th{background:#0F1F33; color:#9FB2C6}
+.res-tbl tbody tr:nth-child(even){background:rgba(255,255,255,.03)}
+.res-tbl .kcell{font-family:"IBM Plex Mono"; text-align:right}
+.badge-u{color:#7FD1A6} .badge-m{color:var(--accent-l)} .badge-o{color:#F0A98B}
+.profile-wrap{margin-top:16px}
+#svgProfile{width:100%; height:auto; display:block; background:#12233A; border-radius:12px; border:1px solid rgba(255,255,255,.08)}
+.note-sm{font-size:12px; color:#8FA1B4; margin-top:10px; line-height:1.6}
+
+/* hand calculation */
+.handcalc-head{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:20px; flex-wrap:wrap}
+.handcalc-head h4{margin:0!important}
+.refresh-btn{background:linear-gradient(150deg,var(--accent),var(--accent-d)); color:#241802; border:none; border-radius:9px; padding:8px 14px; font-family:inherit; font-weight:600; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:.14s; box-shadow:0 2px 10px rgba(228,161,27,.25)}
+.refresh-btn:hover{filter:brightness(1.07); transform:translateY(-1px)}
+.refresh-btn:active{transform:translateY(0)}
+.handcalc{margin-top:12px; background:#0F1F33; border:1px solid rgba(255,255,255,.09); border-radius:12px; padding:16px; font-family:"IBM Plex Mono",monospace; font-size:12.5px; line-height:1.65; color:#CFE0EF; overflow-x:auto}
+.handcalc.flash{animation:hcflash .6s ease}
+@keyframes hcflash{0%{box-shadow:0 0 0 0 rgba(228,161,27,.55)}100%{box-shadow:0 0 0 8px rgba(228,161,27,0)}}
+.hc-block{padding:10px 0; border-top:1px dashed rgba(255,255,255,.1)}
+.hc-block:first-child{border-top:none; padding-top:0}
+.hc-h{color:#9FB2C6; font-family:"Space Grotesk",sans-serif; font-weight:600; font-size:12px; letter-spacing:.04em; margin-bottom:6px; text-transform:uppercase}
+.hc-eq{margin:3px 0; white-space:normal}
+.hc-eq .sub{color:#8298AE}
+.hc-r{color:var(--accent-l); font-weight:600}
+.hc-note{color:#8FA1B4; font-family:"IBM Plex Sans Thai",sans-serif; font-size:11.5px; margin-top:4px}
+.hc-ctx{background:rgba(46,155,199,.10); border:1px solid rgba(46,155,199,.3); border-radius:9px; padding:9px 11px; margin-top:8px}
+.hc-ctx .hc-h{color:#7EC3E0}
+.hc-tag{display:inline-block; font-size:10px; padding:1px 7px; border-radius:12px; background:rgba(255,255,255,.08); color:#9FB2C6; margin-left:6px; font-family:"IBM Plex Sans Thai",sans-serif}
+
+/* superposition panel */
+.super-panel{margin-top:22px; background:#F4F7FB; border:1px solid #D8E1EB; border-radius:var(--r); padding:22px}
+.super-head{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:6px}
+.super-head h4{margin:0; font-size:16px; color:#1B2E48; font-family:"Space Grotesk"; font-weight:600}
+.super-sub{margin:6px 0 0; font-size:13px; color:#51637A; max-width:70ch; line-height:1.55}
+.super-legend{display:flex; gap:16px; flex-wrap:wrap; font-size:12.5px; color:#33475B; align-items:center}
+.super-legend .lg{display:flex; align-items:center; gap:6px; white-space:nowrap}
+.super-legend .sw{width:22px; height:0; border-top-width:3px; border-top-style:solid; display:inline-block}
+.super-legend .sw-dot{width:13px; height:13px; border-radius:50%; background:#B9C7D6; border:2px solid #6E8296; display:inline-block}
+#svgSuper{width:100%; height:auto; display:block; background:#FFFFFF; border-radius:12px; border:1px solid #D8E1EB; margin-top:12px}
+#svgVolume{width:100%; height:auto; display:block; background:#FFFFFF; border-radius:12px; border:1px solid #D8E1EB; margin-top:4px}
+.super-note{font-size:13px; color:#7A5A2A; margin:12px 0 0; line-height:1.65}
+.super-note b{color:#4A3A1A}
+.super-formula{margin-top:14px; background:#FFFFFF; border:1px solid #D8E1EB; border-radius:11px; padding:14px 16px}
+.sf-eq{font-family:"IBM Plex Mono",monospace; font-size:15px; color:#B77A08; text-align:center; margin-bottom:8px; font-weight:600}
+.sf-cite{font-size:12.5px; color:#54657A; line-height:1.7}
+.sf-cite b{color:#22405C}
+/* volume hand-calc — light variant */
+#volumeCalc{background:#FFFFFF; border:1px solid #D8E1EB; color:#33475B}
+#volumeCalc .hc-h{color:#51637A}
+#volumeCalc .hc-r{color:#B77A08}
+#volumeCalc .hc-eq{color:#33475B}
+#volumeCalc .hc-eq .sub{color:#8194A6}
+#volumeCalc .hc-note{color:#6A7C8E}
+#volumeCalc .hc-note b{color:#B77A08}
+#volumeCalc .hc-block{border-top-color:#E3E9F0}
+
+/* verification */
+.v-grid{display:grid; gap:18px}
+.v-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch}
+.v-tbl{width:100%; border-collapse:collapse; font-size:14px; min-width:520px}
+.v-tbl th{text-align:left; font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-family:"Space Grotesk"; font-weight:600; padding:8px 10px; border-bottom:2px solid var(--line)}
+.v-tbl td{padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:top}
+.v-tbl tbody tr:last-child td{border-bottom:none}
+.v-num{font-family:"IBM Plex Mono"; font-weight:600; white-space:nowrap}
+.v-ok{font-family:"IBM Plex Mono"; font-weight:600; color:#1E8E5A; white-space:nowrap}
+.v-pass{display:inline-block; font-size:11.5px; font-weight:600; font-family:"IBM Plex Sans Thai"; color:#1E8E5A; background:rgba(30,142,90,.12); border:1px solid rgba(30,142,90,.35); border-radius:20px; padding:2px 11px; margin-left:8px; vertical-align:middle}
+.v-note{font-size:13.5px; color:var(--muted); margin:12px 0 0; line-height:1.6}
+.v-verdict{border:1px solid rgba(228,161,27,.4); background:linear-gradient(180deg,rgba(228,161,27,.06),transparent)}
+.v-caveat{margin:10px 0 0; padding-left:20px; line-height:1.7}
+.v-caveat li{margin-bottom:8px; font-size:14.5px}
+.v-cite{margin-top:20px; font-size:13px; color:var(--muted); line-height:1.7; border-top:1px solid var(--line); padding-top:14px}
+
+/* references */
+.refs{padding:52px 0 30px}
+.ref-list{columns:2; column-gap:40px; font-size:13.5px; color:var(--muted)}
+.ref-list div{break-inside:avoid; padding:7px 0; border-top:1px solid var(--line)}
+.ref-list b{color:var(--ink); font-family:"IBM Plex Mono"; font-size:12px; margin-right:6px}
+
+footer{background:var(--deep); color:#8FA1B4; padding:34px 0; font-size:13px}
+footer .wrap{display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; align-items:center}
+
+.disclaimer{background:#FBEEE9; border:1px solid #F0C4B8; border-radius:12px; padding:16px 20px; font-size:13.5px; color:#7A3423; margin-top:26px}
+.disclaimer b{color:#5E2718}
+
+@media(max-width:900px){
+  .g2,.g3{grid-template-columns:1fr}
+  .calc{grid-template-columns:1fr}
+  .ref-list{columns:1}
+}
+@media(max-width:560px){
+  .wrap,.nav-in,.hero-in{padding-left:16px;padding-right:16px}
+  section{padding-top:44px;padding-bottom:44px}
+  .hero-in{padding-top:44px}
+  .hero-stats{gap:12px 22px}
+  .sv-top{padding:10px 12px}
+  .readout{gap:10px 14px; font-size:11px}
+  .card{padding:16px}
+  .preset-grid{grid-template-columns:1fr 1fr}
+  .trow{grid-template-columns:18px 1fr 1fr 1fr 22px; gap:5px; padding:8px}
+  .srow{grid-template-columns:1fr 78px 28px}
+  /* 16px on focusable fields prevents iOS Safari auto-zoom on tap */
+  .trow input,.srow input,.trow select,.srow select,.ctl input,.ctl select{font-size:16px; min-width:0}
+  .credit{font-size:10px; left:10px; bottom:8px}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important; scroll-behavior:auto}}
+.reveal{opacity:0; transform:translateY(14px); transition:opacity .6s ease,transform .6s ease}
+.reveal.in{opacity:1; transform:none}
+.credit{position:fixed; left:14px; bottom:10px; z-index:60; font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.04em; color:#9AA6B2; opacity:.72; pointer-events:none; user-select:none}
+
+/* ===== PRINT / PDF LAYOUT (A4) — ใช้เมื่อกด Ctrl/Cmd+P ===== */
+@media print{
+  @page{ size:A4; margin:14mm; }
+  html,body{ background:#fff !important; }
+  body{ color:#1a2330 !important; font-size:11pt; padding-bottom:0 !important; }
+  /* hide interactive chrome */
+  nav.nav, .nav, .pdf-btn, .refresh-btn, .add-btn, .hint, .sv-caption, .livebox, .cta-row, #presets, .preset-grid,
+  .seg, #shieldSeg, #stageSeg, .handcalc-head .refresh-btn{ display:none !important; }
+  .credit{ position:static; opacity:.9; color:#556 !important; }
+  /* hero simplified */
+  .hero{ background:#fff !important; }
+  .hero-bg, #heroFig, .hero-fig{ display:none !important; }
+  .hero h1, .hero .lead, .hero .hstat *{ color:#1a2330 !important; }
+  /* force dark theme areas to light with dark text (HTML only; SVG keeps its own colours) */
+  .calc-sec, .calc-sec *, footer, footer *{ color:#1a2330 !important; }
+  .calc-sec, .panel, .stage-view, .results, .super-panel, footer, .diagram, .handcalc, #volumeCalc, .super-formula{
+    background:#fff !important; border-color:#cdd6e0 !important; box-shadow:none !important;
   }
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0}
-  body{font-family:var(--thai);color:var(--ink);background:var(--paper);line-height:1.55;-webkit-text-size-adjust:100%}
-  .wrap{max-width:1180px;margin:0 auto;padding:22px 16px 60px}
-
-  header.top{border-bottom:2px solid var(--ink);padding-bottom:16px;margin-bottom:22px}
-  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--infl);margin:0 0 6px}
-  h1{font-size:clamp(21px,3.4vw,30px);line-height:1.2;margin:0 0 8px;font-weight:800}
-  .lede{color:var(--label);max-width:72ch;margin:0;font-size:15px}
-
-  .grid{display:grid;grid-template-columns:1.35fr .9fr;gap:20px;align-items:start}
-  @media(max-width:900px){.grid{grid-template-columns:1fr}}
-
-  .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
-  .panel.diagram{padding:8px}
-  figure{margin:0}
-  svg{display:block;width:100%;height:auto;border-radius:8px;background:var(--sky)}
-
-  .modebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
-  .badge{font-family:var(--mono);font-size:12.5px;font-weight:700;padding:6px 11px;border-radius:999px;letter-spacing:.02em;border:1.5px solid}
-  .badge.sh{color:var(--shallow);border-color:var(--shallow);background:rgba(31,122,84,.08)}
-  .badge.dp{color:var(--deep);border-color:var(--deep);background:rgba(180,86,10,.09)}
-
-  .readout{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:16px;background:linear-gradient(180deg,#fff,#fbfcfd)}
-  .readout .k{font-size:13px;color:var(--muted);margin:0 0 2px}
-  .bignum{font-family:var(--mono);font-weight:800;font-size:clamp(32px,6.6vw,44px);line-height:1;color:var(--amber);letter-spacing:-.01em}
-  .bignum small{font-size:.42em;font-weight:700;color:var(--label);margin-left:6px;letter-spacing:0}
-  .sub{font-family:var(--mono);font-size:13.5px;color:var(--label);margin-top:8px}
-  .sub b{color:var(--ink)}
-  .comp{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:6px}
-
-  .sliderrow{display:flex;align-items:center;gap:10px;margin:4px 0 6px}
-  .step{width:42px;height:42px;flex:0 0 auto;border:1.5px solid var(--ink);background:#fff;color:var(--ink);font-size:22px;font-weight:700;border-radius:10px;cursor:pointer;line-height:0}
-  .step:active{background:var(--ink);color:#fff}
-  .step:focus-visible{outline:3px solid var(--infl);outline-offset:2px}
-  input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:8px;border-radius:999px;background:var(--line);outline:none}
-  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid var(--ink);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.2)}
-  input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid var(--ink);cursor:pointer}
-  input[type=range]:focus-visible::-webkit-slider-thumb{outline:3px solid var(--infl);outline-offset:2px}
-  .scale{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px}
-  .depthval{font-family:var(--mono);text-align:center;font-size:14px;color:var(--label);margin-top:4px}
-  .depthval b{color:var(--ink);font-size:16px}
-
-  .presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-  .chip{font-family:var(--mono);font-size:12.5px;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;cursor:pointer;color:var(--label)}
-  .chip[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
-  .chip:focus-visible{outline:3px solid var(--infl);outline-offset:2px}
-
-  .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px}
-  @media(max-width:640px){.cards{grid-template-columns:1fr}}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
-  .card h3{margin:0 0 8px;font-size:15px;display:flex;align-items:center;gap:8px}
-  .dot{width:12px;height:12px;border-radius:3px;flex:0 0 auto}
-  .formula{font-family:var(--mono);font-size:13px;background:#f3f6f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:8px 0;color:var(--ink);overflow-x:auto;line-height:1.7}
-  .card p{margin:6px 0;font-size:14px;color:var(--label)}
-
-  .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)}
-  .legend span{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-family:var(--mono);color:var(--label)}
-  .sw{width:20px;height:0;border-top-width:3px;border-top-style:solid;display:inline-block}
-
-  .note{margin-top:22px;background:#fff8ec;border:1px solid #f0d9a8;border-left:4px solid var(--amber);border-radius:10px;padding:14px 16px;font-size:13.5px;color:#6b5220}
-  .note b{color:#8a5a00}
-  footer{margin-top:30px;font-size:12px;color:var(--muted);font-family:var(--mono);text-align:center}
+  .res-tbl thead th{ background:#eef2f7 !important; }
+  input,select{ border:1px solid #cdd6e0 !important; background:#fff !important; color:#1a2330 !important; }
+  * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  /* keep figures/tables/cards intact across pages */
+  .card, .panel, .super-panel, .results, .handcalc, #volumeCalc, table, .diagram,
+  svg, #svgVolume, #svgSuper, #svgSection, #svgProfile, .disclaimer, .proj{
+    break-inside:avoid; page-break-inside:avoid;
+  }
+  h2,h3,h4{ break-after:avoid; page-break-after:avoid; }
+  svg{ max-width:100%; height:auto; }
+  a{ color:#1a2330 !important; text-decoration:none; }
+  section{ padding:10px 0 !important; }
+}
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <header class="top">
-    <p class="eyebrow">Underground MRT · Protection Zone</p>
-    <h1>เขตพื้นที่ป้องกันของโครงสร้างรถไฟฟ้าใต้ดิน</h1>
-    <p class="lede">เลื่อนความลึกของแกนอุโมงค์ (ทีละ 0.50 ม.) เพื่อดูแนวเขตป้องกันบนผิวดิน โครงสร้างของแนวคือ
-      <b>offset ราบ 3.00 ม. ออกจากเส้นขอบก่อน</b> แล้วจึงลาดขึ้นตาม Zone of Influence
-      กฎสลับอัตโนมัติที่ความลึก 24 ม. — ตื้นกว่าหรือเท่ากับ 24 ม. ใช้กฎ “ฝั่งขวา” (ลาด 1:1) และลึกกว่า 24 ม. ใช้กฎ “ฝั่งซ้าย” (1:1 ช่วงบน + 2:1 ช่วงล่าง)</p>
-  </header>
-
-  <div class="grid">
-    <section class="panel diagram">
-      <figure><div id="diagram"></div></figure>
-    </section>
-
-    <section class="panel">
-      <div class="modebar">
-        <span id="mode" class="badge sh">โหมดตื้น · กฎฝั่งขวา (D₁ ≤ 24 ม.)</span>
-      </div>
-
-      <div class="readout">
-        <p class="k">ระยะจากศูนย์กลางอุโมงค์ถึงขอบเขตป้องกันบนผิวดิน</p>
-        <div class="bignum"><span id="cval">24.00</span><small>เมตร</small></div>
-        <div class="sub">ความกว้างเขตป้องกัน (นับจากขอบ ROW) = <b id="rval">21.00</b> ม.</div>
-        <div class="comp" id="comp">= 3.00 (ROW) + 3.00 (offset) + 18.00 (ลาด 1:1)</div>
-      </div>
-
-      <label for="depth" class="k" style="font-size:13px;color:var(--muted)">ความลึกถึงแกนอุโมงค์ (D)</label>
-      <div class="sliderrow">
-        <button class="step" id="minus" aria-label="ลดความลึก 0.5 เมตร">&minus;</button>
-        <input id="depth" type="range" min="6" max="50" step="0.5" value="18" aria-label="ความลึกแกนอุโมงค์เป็นเมตร">
-        <button class="step" id="plus" aria-label="เพิ่มความลึก 0.5 เมตร">+</button>
-      </div>
-      <div class="scale"><span>6 ม.</span><span>24 ม. (จุดเปลี่ยนกฎ)</span><span>50 ม.</span></div>
-      <div class="depthval">D = <b id="dval">18.0</b> ม.</div>
-
-      <div class="presets" id="presets">
-        <button class="chip" data-d="12">12 ม.</button>
-        <button class="chip" data-d="18">18 ม.</button>
-        <button class="chip" data-d="24">24 ม.</button>
-        <button class="chip" data-d="30">30 ม.</button>
-        <button class="chip" data-d="40">40 ม.</button>
-      </div>
-
-      <div class="legend">
-        <span><i class="sw" style="border-top-color:var(--offset)"></i>offset ราบ 3.00 ม.</span>
-        <span><i class="sw" style="border-top-color:var(--infl)"></i>Zone of Influence</span>
-        <span><i class="sw" style="border-top-color:var(--amber);border-top-width:4px"></i>Protection Zone (ผิวดิน)</span>
-        <span><i class="sw" style="border-top-color:var(--thr);border-top-style:dashed"></i>ระดับ 24.00 ม.</span>
-        <span><i class="sw" style="border-top-color:var(--row);border-top-style:dashed"></i>ขอบเขตทาง (ROW)</span>
-      </div>
-    </section>
-  </div>
-
-  <div class="cards">
-    <div class="card">
-      <h3><span class="dot" style="background:var(--shallow)"></span>กฎฝั่งขวา · ตื้น (D ≤ 24 ม.)</h3>
-      <p>จากเส้นขอบ (ROW) offset ออกไปในแนวราบ <b>3.00 ม.</b> ก่อน แล้วลาดขึ้นผิวดินด้วยความชัน <b>1:1</b> ตลอดความลึก</p>
-      <div class="formula">จากศูนย์กลาง = 3.00 + 3.00 + D<br>จากขอบ ROW = 3.00 + D</div>
-      <p>ยิ่งลึก เขตป้องกันยิ่งกว้างในสัดส่วน 1:1</p>
+<nav class="nav">
+  <div class="nav-in">
+    <div class="brand">
+      <span class="dot"><svg viewBox="0 0 24 24" fill="none"><path d="M2 16c3-5 6-5 10-5s7 0 10 5" stroke="#241802" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="17" r="3.4" fill="#241802"/></svg></span>
+      Settlement&nbsp;Studio
     </div>
-    <div class="card">
-      <h3><span class="dot" style="background:var(--deep)"></span>กฎฝั่งซ้าย · ลึก (D &gt; 24 ม.)</h3>
-      <p>offset ราบ <b>3.00 ม.</b> ก่อนเช่นกัน จากนั้นช่วงล่าง (ลึกกว่า 24 ม.) ลาดชัน <b>2:1</b> และช่วงบน 24 ม. ลาด <b>1:1</b></p>
-      <div class="formula">จากศูนย์กลาง = 3.00 + 3.00 + [24 + (D−24)/2]<br>จากขอบ ROW = 3.00 + 24 + (D−24)/2</div>
-      <p>ที่ D = 24 ม. ทั้งสองกฎให้ค่าเท่ากันพอดี (ต่อเนื่องกัน)</p>
+    <div class="nav-links">
+      <a href="#intro">บทนำ</a>
+      <a href="#theory">ทฤษฎี</a>
+      <a href="#data">ข้อมูลเชิงประจักษ์</a>
+      <a href="#projects">โครงการตัวอย่าง</a>
+      <a href="#stages">ระดับการทำนาย</a>
+      <a href="#calc">เครื่องคำนวณ</a>
+      <a href="#verify">การสอบเทียบ</a>
+      <a href="#refs">อ้างอิง</a>
     </div>
   </div>
+</nav>
 
-  <div class="note">
-    <b>โครงสร้างของแนว (ตามที่แก้):</b> ศูนย์กลางอุโมงค์ &rarr; 3.00 ม. ถึงเส้นขอบ ROW &rarr; <b>offset ราบออกไปอีก 3.00 ม.</b> &rarr; จึงเริ่มลาดขึ้นตาม Zone of Influence (1:1 หรือ 2:1+1:1) &rarr; ตัดผิวดินเป็นขอบเขตป้องกัน
-    <br><b>หมายเหตุ:</b> ค่าคงที่ (ROW 3.00, offset 3.00, ลาด 1:1/2:1, จุดเปลี่ยน 24 ม., อุโมงค์ 6.30 ม.) ถอดจากรูปที่อัปโหลด และวาดสมมาตรสองข้างของอุโมงค์เดี่ยว หากข้อกำหนดฉบับจริง (เช่น LTA/SRMEG) นิยาม “เส้นขอบ” เป็นขอบโครงสร้างอุโมงค์แทน ROW บอกได้ ปรับค่าเดียวได้ทันที
+<header class="hero">
+  <div class="hero-in">
+    <span class="eyebrow">TBM Tunnelling · Soft Ground · Empirical Method</span>
+    <h1>การทรุดตัวของผิวดินจากการขุดอุโมงค์</h1>
+    <p class="lead">
+      สื่อการเรียนรู้และเครื่องคำนวณเชิงโต้ตอบ ว่าด้วยการทำนาย “หลุมทรุดตัว” (settlement trough)
+      ที่ผิวดินเหนืออุโมงค์ TBM ในชั้นดินอ่อน ด้วยวิธีเชิงประจักษ์ของ Peck (1969) และ O’Reilly &amp; New (1982)
+      ประกอบข้อมูลจากการวิเคราะห์หลุมทรุดตัวจริงกว่า 100 กรณีของโครงการ slurry / EPB shield
+    </p>
+    <div class="cta-row">
+      <a href="#calc" class="btn btn-a">เปิดเครื่องคำนวณ →</a>
+      <a href="#theory" class="btn btn-g">เริ่มเรียนทฤษฎี</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hstat"><b>~100</b><span>หลุมทรุดตัวที่วิเคราะห์</span></div>
+      <div class="hstat"><b>V<sub>L</sub></b><span>Volume Loss 0.03–0.83%</span></div>
+      <div class="hstat"><b>K</b><span>พารามิเตอร์ความกว้างหลุม</span></div>
+      <div class="hstat"><b>2</b><span>ระดับการทำนาย (Stage 1 &amp; 2)</span></div>
+    </div>
+    <div class="hero-fig" id="heroFig"></div>
   </div>
+</header>
 
-  <footer>ไฟล์เดียว · ใช้งานออฟไลน์ได้ทั้งบน PC และมือถือ · ไม่ต้องเชื่อมต่ออินเทอร์เน็ต</footer>
-</div>
+<main>
+
+<!-- INTRO -->
+<section id="intro">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">01 — บทนำ</span>
+      <h2>ทำไมต้องทำนายการทรุดตัว</h2>
+      <p>เมื่อ TBM ขุดผ่านใต้เมือง การสูญเสียปริมาตรดินรอบหัวเจาะทำให้ผิวดินด้านบนทรุดลงเป็นแอ่งรูประฆังคว่ำ
+        ซึ่งเป็นความเสี่ยงต่ออาคารและสาธารณูปโภคเหนืออุโมงค์ วิศวกรจึงต้องประเมิน<b>ขนาด</b>และ<b>รูปร่าง</b>ของหลุมทรุดตัวล่วงหน้า</p>
+    </div>
+    <div class="grid g3">
+      <div class="card reveal">
+        <h3><span class="num-chip">A</span>แหล่งของการทรุดตัว</h3>
+        <p class="small muted">การทรุดตัวเกิดจากการสูญเสียปริมาตร (volume loss) ที่หน้าเจาะ รอบเปลือก shield ช่องว่างหลังหาง (tail void) และการเสียรูปของ lining ทั้งหมดถูกรวบเป็นค่าตัวแทนเดียวคือ V<sub>L</sub></p>
+      </div>
+      <div class="card reveal">
+        <h3><span class="num-chip">B</span>การควบคุมหน้าเจาะ</h3>
+        <p class="small muted">Shield แบบ slurry ควบคุมแรงดันหน้าเจาะได้แม่นยำกว่า EPB จึงมักให้ V<sub>L</sub> ต่ำกว่าเล็กน้อย ในทราย V<sub>L</sub> ≤ 0.5% ทำได้บ่อยครั้ง</p>
+      </div>
+      <div class="card reveal">
+        <h3><span class="num-chip">C</span>ช่วงค่าที่คาดการณ์</h3>
+        <p class="small muted">การวัดจริงพบว่าการทรุดตัวกระจายเป็น<b>ช่วง</b>เสมอ แม้ระยะปิดทับและชั้นดินใกล้เคียงกัน การทำนายที่ดีจึงให้ผลเป็นช่วง (ต่ำ–กลาง–สูง) ไม่ใช่ค่าเดียว</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- THEORY -->
+<section id="theory" style="background:var(--paper2)">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">02 — ทฤษฎี</span>
+      <h2>วิธีเชิงประจักษ์ &amp; สมการหลัก</h2>
+      <p>หลุมทรุดตัวตามขวางอธิบายด้วยเส้นโค้งการแจกแจงปกติ (Gaussian) วิธีนี้พัฒนาโดย Peck (1969) และต่อยอดโดยนักวิจัยจำนวนมาก</p>
+    </div>
+
+    <div class="grid g2">
+      <div class="card reveal">
+        <h3><span class="num-chip">1</span>รูปร่างหลุมทรุดตัว (Gaussian)</h3>
+        <p class="small muted">การทรุดตัว s ที่ระยะ y จากแกนอุโมงค์:</p>
+        <div class="eq"><span class="lbl">Eq.1</span>$$ s(y) = s_{max}\cdot e^{-\,y^2/(2 i^2)} $$</div>
+        <ul class="def-list">
+          <li><b>s<sub>max</sub></b><span>การทรุดตัวสูงสุด เหนือแนวแกนอุโมงค์</span></li>
+          <li><b>y</b><span>ระยะราบจากแกนอุโมงค์</span></li>
+          <li><b>i</b><span>ระยะจุดเปลี่ยนความโค้ง (inflection point)</span></li>
+        </ul>
+      </div>
+
+      <div class="card reveal">
+        <h3><span class="num-chip">2</span>ความกว้างของหลุม i = K·z₀</h3>
+        <p class="small muted">ระยะ i ขึ้นกับสภาพดินและความลึกอุโมงค์ (O’Reilly &amp; New 1982):</p>
+        <div class="eq"><span class="lbl">Eq.2</span>$$ i = K\cdot z_0 $$</div>
+        <ul class="def-list">
+          <li><b>K</b><span>พารามิเตอร์ความกว้างหลุม (ไร้หน่วย) ขึ้นกับชนิดดิน</span></li>
+          <li><b>z₀</b><span>ความลึกของแกนอุโมงค์จากผิวดิน</span></li>
+        </ul>
+      </div>
+
+      <div class="card reveal">
+        <h3><span class="num-chip">3</span>ปริมาตรหลุม &amp; Volume Loss</h3>
+        <p class="small muted">อินทิเกรต Eq.1 ได้ปริมาตรหลุมต่อความยาว 1 เมตร:</p>
+        <div class="eq"><span class="lbl">Eq.3</span>$$ V_s = \sqrt{2\pi}\;\cdot i\cdot s_{max} $$</div>
+        <p class="small muted">เทียบกับพื้นที่หน้าตัดที่ขุด A<sub>t</sub> ได้ค่า Volume Loss:</p>
+        <div class="eq"><span class="lbl">Eq.4</span>$$ V_L = \frac{V_s}{A_t},\qquad A_t=\frac{\pi D^2}{4} $$</div>
+        <ul class="def-list">
+          <li><b>V<sub>L</sub></b><span>Volume Loss [%] — ตัววัดขนาดหลุมทรุด</span></li>
+          <li><b>D</b><span>เส้นผ่านศูนย์กลางการขุด</span></li>
+        </ul>
+      </div>
+
+      <div class="card reveal">
+        <h3><span class="num-chip">4</span>สมการที่ใช้คำนวณจริง</h3>
+        <p class="small muted">รวม Eq.1–4 หาค่า s<sub>max</sub> จากพารามิเตอร์ที่รู้:</p>
+        <div class="eq">$$ s_{max}=\dfrac{V_L\cdot A_t}{\sqrt{2\pi}\;\cdot i}=\dfrac{V_L\cdot \pi D^2/4}{\sqrt{2\pi}\;\cdot K z_0} $$</div>
+        <p class="small muted">สำหรับ<b>อุโมงค์หลายท่อ</b> ใช้หลักการซ้อนทับ (superposition) รวมหลุมของแต่ละท่อ:</p>
+        <div class="eq">$$ s(y)=\sum_j s_{max,j}\cdot e^{-(y-x_j)^2/(2 i_j^2)} $$</div>
+        <p class="note-sm" style="color:var(--muted)">อุโมงค์คู่ให้หลุมรูปตัว W เมื่อระยะห่างแกนมากพอเทียบกับ i (เห็นได้ในกรณี Katzenberg)</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EMPIRICAL DATA -->
+<section id="data">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">03 — ข้อมูลเชิงประจักษ์</span>
+      <h2>ค่า V<sub>L</sub> และ K จากการวัดจริง ~100 กรณี</h2>
+      <p>ค่าทั้งสองถูกคำนวณย้อนกลับ (back-calculated) จากหลุมทรุดตัวที่วัดจริง แล้ววิเคราะห์เชิงสถิติเป็นควอนไทล์ 5% / 50% / 95%</p>
+    </div>
+
+    <div class="grid g2">
+      <div class="card reveal">
+        <h3>Volume Loss V<sub>L</sub> — แยกตามชนิด shield</h3>
+        <p class="small muted">ค่าควอนไทล์จากการวิเคราะห์ (ค่าต่ำ / กลาง / สูง):</p>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>ชนิด shield</th><th class="num">5%</th><th class="num">50%</th><th class="num">95%</th><th class="num">ช่วงรวม</th></tr></thead>
+            <tbody>
+              <tr><td>Slurry (32 หลุม)</td><td class="num">0.05</td><td class="num">0.31</td><td class="num">0.58</td><td class="num">0.03–0.63</td></tr>
+              <tr><td>EPB (78 หลุม)</td><td class="num">0.15</td><td class="num">0.41</td><td class="num">0.77</td><td class="num">0.03–0.83</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note-sm" style="color:var(--muted)">หน่วย % · slurry ควบคุมหน้าเจาะได้นิ่งกว่า จึงมักให้ค่าต่ำกว่า EPB เล็กน้อย · การทรุดตัวสูงสุดที่วัดได้ ~0.1–3.6 ซม.</p>
+      </div>
+
+      <div class="card reveal">
+        <h3>พารามิเตอร์ K — แยกตามชนิดดิน</h3>
+        <p class="small muted">ค่าอ้างอิงจากวรรณกรรมที่บทความยกมา:</p>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>กลุ่มดิน</th><th class="num">5%</th><th class="num">50%</th><th class="num">95%</th></tr></thead>
+            <tbody>
+              <tr><td><span class="pill" style="background:var(--coarse)"></span>เม็ดหยาบ (ทราย/กรวด)</td><td class="num">0.30</td><td class="num">0.38</td><td class="num">0.45</td></tr>
+              <tr><td><span class="pill" style="background:var(--fine)"></span>เม็ดละเอียด (ดินเหนียว)</td><td class="num">0.35</td><td class="num">0.48</td><td class="num">0.60</td></tr>
+              <tr><td><span class="pill" style="background:var(--mixed)"></span>คละเม็ด (mixed)</td><td class="num">0.35</td><td class="num">0.50</td><td class="num">0.65</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note-sm" style="color:var(--muted)">อ้างอิง O’Reilly &amp; New (1982): granular K≈0.25 (0.2–0.3), cohesive K≈0.5 (0.4–0.7); Mair &amp; Taylor (1997): ทราย 0.25–0.45, ดินเหนียว 0.4–0.6 · ดินคละเม็ดกระจายตัวสูงสุด</p>
+      </div>
+    </div>
+
+    <div class="disclaimer reveal">
+      <b>หมายเหตุความถูกต้อง:</b> ค่าควอนไทล์ V<sub>L</sub> คัดลอกมาตรงจากเนื้อความบทความ ส่วนตาราง K ในต้นฉบับ (Table 2b/3) เป็น<b>รูปภาพ</b>ที่อ่านตัวเลขไม่ได้โดยตรง
+      ค่าที่ใช้ในหน้านี้จึงเป็นค่าตัวแทนที่สอดคล้องกับช่วงจากวรรณกรรมที่บทความอ้างถึง (O’Reilly &amp; New; Mair &amp; Taylor; และค่าที่ back-calculate จากโครงการตัวอย่าง) โปรดยึดตารางต้นฉบับเป็นค่าอ้างอิงสุดท้ายในงานจริง
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section id="projects" style="background:var(--paper2)">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">04 — โครงการตัวอย่าง</span>
+      <h2>สามกรณีศึกษาที่มีข้อมูลวัดละเอียด</h2>
+      <p>ยืนยันช่วงค่า V<sub>L</sub>/K และแสดงให้เห็นการกระจายตัวของการทรุดตัวจริง</p>
+    </div>
+    <div class="grid g3">
+      <div class="card reveal">
+        <h3>Milan · Metro Line 5</h3>
+        <span class="tag" style="background:var(--coarse);color:#4A3708">เม็ดหยาบ · EPB Ø6.70 ม.</span>
+        <div class="proj" style="margin-top:12px">
+          <div class="kv"><span>ปิดทับเหนือ crown</span><b>11.65 ม.</b></div>
+          <div class="kv"><span>การทรุดตัววัดได้</span><b>6.0–21.4 มม.</b></div>
+          <div class="kv"><span>ค่าเฉลี่ย</span><b>12.4 มม.</b></div>
+          <div class="kv"><span>V<sub>L</sub> ย้อนกลับ</span><b>0.27–0.82%</b></div>
+          <div class="kv"><span>K ย้อนกลับ</span><b>0.35–0.40</b></div>
+        </div>
+      </div>
+      <div class="card reveal">
+        <h3>Hong Kong Metro · Lot 1103</h3>
+        <span class="tag" style="background:var(--mixed);color:#2E3E2C">คละเม็ด · Slurry Ø7.46 ม.</span>
+        <div class="proj" style="margin-top:12px">
+          <div class="kv"><span>ปิดทับเหนือ crown</span><b>11.8–18.9 ม.</b></div>
+          <div class="kv"><span>การทรุดตัววัดได้</span><b>4.9–12 มม.</b></div>
+          <div class="kv"><span>ค่าเฉลี่ย</span><b>8.1 มม.</b></div>
+          <div class="kv"><span>V<sub>L</sub> ย้อนกลับ</span><b>0.24–0.63%</b></div>
+          <div class="kv"><span>K ย้อนกลับ</span><b>0.35–0.67</b></div>
+        </div>
+      </div>
+      <div class="card reveal">
+        <h3>Katzenberg Tunnel</h3>
+        <span class="tag" style="background:var(--fine);color:#fff">เม็ดละเอียด · EPB คู่ Ø11.16 ม.</span>
+        <div class="proj" style="margin-top:12px">
+          <div class="kv"><span>ปิดทับเหนือ crown</span><b>~23 ม.</b></div>
+          <div class="kv"><span>ระยะห่างแกน 2 ท่อ</span><b>28 ม.</b></div>
+          <div class="kv"><span>การทรุดตัวสูงสุด</span><b>16 มม.</b></div>
+          <div class="kv"><span>V<sub>L</sub> ย้อนกลับ</span><b>0.24–0.39%</b></div>
+          <div class="kv"><span>K ย้อนกลับ</span><b>0.31–0.47</b></div>
+        </div>
+        <p class="note-sm" style="color:var(--muted);margin-top:10px">หลุมรูปตัว W กว้างรวม ~80 ม. · ความลาดเอียงสูงสุดตามขวาง ~1:1000</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STAGES -->
+<section id="stages">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">05 — ระดับการทำนาย</span>
+      <h2>Prediction Stage 1 &amp; 2</h2>
+      <p>เนื่องจาก V<sub>L</sub> กระจายตัวมากกว่า K แนวทางมาตรฐานจึงแปรผัน V<sub>L</sub> เป็นหลัก</p>
+    </div>
+    <div class="grid g2">
+      <div class="card reveal">
+        <h3><span class="tag" style="background:var(--accent);color:#241802">มาตรฐาน</span>&nbsp;Stage 1</h3>
+        <p class="small muted">ใช้ K ที่ควอนไทล์ 50% คงที่ แล้วแปรผัน V<sub>L</sub> เป็น 3 ค่า ได้ค่าทำนายต่ำ–กลาง–สูง:</p>
+        <ul class="def-list">
+          <li><b>P<sub>u</sub></b><span>V<sub>L</sub> 5% + K 50% — ขอบล่าง</span></li>
+          <li><b>P<sub>m</sub></b><span>V<sub>L</sub> 50% + K 50% — ค่ากลาง</span></li>
+          <li><b>P<sub>o</sub></b><span>V<sub>L</sub> 95% + K 50% — ขอบบน</span></li>
+        </ul>
+      </div>
+      <div class="card reveal">
+        <h3><span class="tag" style="background:var(--danger);color:#fff">กรณีพิเศษ</span>&nbsp;Stage 2</h3>
+        <p class="small muted">วิเคราะห์ค่าสุดขั้ว ใช้ V<sub>L</sub> ค่าบน (95%) ร่วมกับ K สองขอบ เพื่อได้หลุมกว้างสุด/แคบสุด:</p>
+        <ul class="def-list">
+          <li><b>P<sub>k1</sub></b><span>V<sub>L</sub> 95% + K 95% — หลุม<b>กว้าง</b> (พิจารณาโครงสร้างไกลออกไป)</span></li>
+          <li><b>P<sub>k2</sub></b><span>V<sub>L</sub> 95% + K 5% — หลุม<b>แคบ+ลึก</b> (โครงสร้างชิดแนวอุโมงค์)</span></li>
+        </ul>
+        <p class="note-sm" style="color:var(--muted)">หลุมของโครงสร้างจริงอาจตื้นกว่า greenfield เพราะความแข็งเกร็งของอาคาร</p>
+      </div>
+    </div>
+    <div class="callout reveal">
+      <span class="eyebrow">ข้อควรระวังในการออกแบบ</span>
+      ยังไม่มีวิธีคำนวณใดที่ทำนายการทรุดตัวได้แม่นยำสำหรับทุกเงื่อนไข การทำนายจึงควรตั้งอยู่บนสมมติฐานที่<b>ระมัดระวัง (conservative)</b> ไม่ใช่มองโลกในแง่ดีเกินไป
+      และควรอ้างอิงข้อมูลจากโครงการที่เทียบเคียงได้เสมอ
+    </div>
+  </div>
+</section>
+
+<!-- CALCULATOR -->
+<section id="calc" class="calc-sec">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow" style="color:var(--accent-l)">06 — เครื่องคำนวณเชิงโต้ตอบ</span>
+      <h2>คำนวณหลุมทรุดตัวที่ผิวดิน</h2>
+      <p>รองรับอุโมงค์เดี่ยว/คู่ ทั้งขนานกัน ซ้อนแนวดิ่ง หรือเยื้อง · ลากเลื่อนอุโมงค์เพื่อดูระยะและผลทันที · จำแนกชั้นดินแบบ USCS พร้อมความหนาและหน่วยน้ำหนัก · กำหนดขนาดและความหนา lining อุโมงค์ · พร้อมการคำนวณด้วยมือแบบแทนค่าที่อัปเดตตามค่าที่เปลี่ยน</p>
+    </div>
+
+    <div class="calc">
+      <!-- CONTROLS -->
+      <div>
+        <div class="panel">
+          <h4>รูปแบบการจัดวาง</h4>
+          <div class="preset-grid" id="presets">
+            <button class="preset" data-p="single"><svg viewBox="0 0 60 40"><line x1="0" y1="12" x2="60" y2="12" stroke="#8298AE" stroke-width="1.5"/><circle cx="30" cy="27" r="7" fill="none" stroke="var(--accent)" stroke-width="2"/></svg>เดี่ยว</button>
+            <button class="preset" data-p="parallel"><svg viewBox="0 0 60 40"><line x1="0" y1="12" x2="60" y2="12" stroke="#8298AE" stroke-width="1.5"/><circle cx="20" cy="27" r="7" fill="none" stroke="var(--accent)" stroke-width="2"/><circle cx="40" cy="27" r="7" fill="none" stroke="var(--accent)" stroke-width="2"/></svg>คู่ขนาน</button>
+            <button class="preset" data-p="stacked"><svg viewBox="0 0 60 40"><line x1="0" y1="8" x2="60" y2="8" stroke="#8298AE" stroke-width="1.5"/><circle cx="30" cy="20" r="6" fill="none" stroke="var(--accent)" stroke-width="2"/><circle cx="30" cy="33" r="6" fill="none" stroke="var(--accent)" stroke-width="2"/></svg>ซ้อนแนวดิ่ง</button>
+            <button class="preset" data-p="offset"><svg viewBox="0 0 60 40"><line x1="0" y1="8" x2="60" y2="8" stroke="#8298AE" stroke-width="1.5"/><circle cx="22" cy="19" r="6" fill="none" stroke="var(--accent)" stroke-width="2"/><circle cx="40" cy="31" r="6" fill="none" stroke="var(--accent)" stroke-width="2"/></svg>เยื้อง</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h4>อุโมงค์ <span id="tCount" class="mono" style="color:var(--accent-l);float:right"></span></h4>
+          <div id="tunnelList"></div>
+          <button class="add-btn" id="addTunnel">+ เพิ่มอุโมงค์</button>
+        </div>
+
+        <div class="panel">
+          <h4>วิธีขุด (ควบคุม V<sub>L</sub>)</h4>
+          <div class="seg" id="shieldSeg">
+            <button data-s="slurry">Slurry</button>
+            <button data-s="epb" class="on">EPB</button>
+          </div>
+          <div class="field" style="margin-top:14px">
+            <label>ลักษณะดินที่ควบคุมรูปหลุม (K)</label>
+            <select id="kGroup">
+              <option value="auto">อัตโนมัติจากชั้น USCS ที่แกนอุโมงค์</option>
+              <option value="coarse">เม็ดหยาบ (granular)</option>
+              <option value="fine">เม็ดละเอียด (cohesive)</option>
+              <option value="mixed">คละเม็ด (mixed)</option>
+            </select>
+            <div class="mini" id="kAuto" style="margin-top:6px"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h4>ชั้นดิน &amp; น้ำใต้ดิน</h4>
+          <p class="panel-note">จำแนกชั้นดินอ้างอิงระบบ <b>USCS</b> (Unified Soil Classification System · ASTM D2487)</p>
+          <div class="field">
+            <label>ระดับน้ำใต้ดิน (ลึกจากผิว) <span class="v" id="gwlV"></span></label>
+            <input type="range" id="gwl" min="0" max="40" step="0.5">
+          </div>
+          <div id="soilList"></div>
+          <button class="add-btn" id="addSoil">+ เพิ่มชั้นดิน</button>
+        </div>
+      </div>
+
+      <!-- VIEW -->
+      <div>
+        <div class="stage-view">
+          <div class="sv-top">
+            <div class="title">ภาพตัดขวาง และ การทรุดตัวที่ผิวดิน</div>
+            <div class="readout" id="readout"></div>
+          </div>
+          <div class="diagram" id="diagram">
+            <svg id="svgSection" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet"></svg>
+            <div class="livebox" id="livebox"></div>
+          </div>
+          <div class="sv-caption">↔ ลากวงกลมอุโมงค์เพื่อย้ายตำแหน่ง · ลากเส้นน้ำใต้ดินเพื่อปรับระดับ</div>
+          <div class="sv-values" id="svValues"></div>
+        </div>
+
+        <div class="results">
+          <h4>ผลการทำนาย <span id="stageLabel" class="mono" style="float:right;color:var(--accent-l)"></span></h4>
+          <div class="seg" id="stageSeg" style="max-width:280px;margin-bottom:14px">
+            <button data-st="1" class="on">Stage 1 (มาตรฐาน)</button>
+            <button data-st="2">Stage 2 (สุดขั้ว)</button>
+          </div>
+          <div class="tbl-wrap" style="border:none">
+            <table class="res-tbl" id="resTbl"></table>
+          </div>
+
+          <div class="handcalc-head">
+            <h4>การคำนวณด้วยมือ — แสดงการแทนค่า</h4>
+            <button id="btnRefresh" class="refresh-btn" type="button">🔄 คำนวณใหม่</button>
+          </div>
+          <div id="handcalc" class="handcalc"></div>
+
+          <div class="profile-wrap">
+            <svg id="svgProfile" viewBox="0 0 1000 300" preserveAspectRatio="xMidYMid meet"></svg>
+          </div>
+          <p class="note-sm" id="engineNote"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUPERPOSITION -->
+    <div class="super-panel">
+      <div class="super-head">
+        <div>
+          <h4 id="superTitle">การทรุดตัวที่ผิวดิน</h4>
+          <p class="super-sub" id="superSub">—</p>
+        </div>
+        <div class="super-legend" id="superLegend"></div>
+      </div>
+      <svg id="svgSuper" viewBox="0 0 1000 480" preserveAspectRatio="xMidYMid meet"></svg>
+      <p class="super-note" id="superNote"></p>
+      <div class="super-formula">
+        <div class="sf-eq">s(y) = Σⱼ s<sub>max,j</sub> · exp( −(y − x<sub>j</sub>)² / (2 · i<sub>j</sub>²) )</div>
+        <div class="sf-cite">ที่มาของสูตร: หลุมทรุดเกาส์เซียนของอุโมงค์เดี่ยว — <b>Peck (1969)</b> · การซ้อนทับเกาส์เซียนสองเส้นสำหรับอุโมงค์คู่ เสนอครั้งแรกโดย <b>O'Reilly &amp; New (1982)</b> · เทคนิค superposition อย่างเป็นระบบ (แยกเส้นแต่ละอุโมงค์แล้วรวมกัน) โดย <b>Suwansawat &amp; Einstein (2007)</b> จากข้อมูลรถไฟฟ้าใต้ดินกรุงเทพฯ — J. Geotech. Geoenviron. Eng. 133(4), 445–468</div>
+      </div>
+    </div>
+
+    <!-- VOLUME LOSS BY NUMERICAL INTEGRATION -->
+    <div class="super-panel vol-panel">
+      <div class="super-head">
+        <div>
+          <h4>Settlement Trough Area (S<sub>A</sub>) &amp; Volume Loss (V<sub>L</sub>) — โดยการอินทิเกรตเชิงตัวเลข</h4>
+          <p class="super-sub">แบ่ง settlement trough เป็น n−1 แถบเท่า ๆ กัน (Δx) หาพื้นที่ S<sub>A</sub> ด้วยกฎ trapezoidal แล้วย้อนหา volume loss V<sub>L</sub> = S<sub>A</sub>/S<sub>D</sub></p>
+        </div>
+      </div>
+      <svg id="svgVolume" viewBox="0 0 1000 430" preserveAspectRatio="xMidYMid meet"></svg>
+      <div id="volumeCalc" class="handcalc" style="margin-top:12px"></div>
+      <div class="super-formula">
+        <div class="sf-eq">S<sub>A</sub> = ∫<sub>a</sub><sup>b</sup> S(x) dx ≈ Δx · [ ½S<sub>0</sub> + S<sub>1</sub> + … + S<sub>n−1</sub> + ½S<sub>n</sub> ] &nbsp;·&nbsp; S<sub>D</sub> = πD²/4 &nbsp;·&nbsp; V<sub>L</sub> = S<sub>A</sub> / S<sub>D</sub></div>
+        <div class="sf-cite">แนวคิด settlement trough area (S<sub>A</sub>) / volume loss (V<sub>L</sub>): <b>Peck (1969)</b>, <b>O'Reilly &amp; New (1982)</b> · การหา S<sub>A</sub> ด้วยการอินทิเกรตเชิงตัวเลข (trapezoidal rule) เป็นวิธีมาตรฐานในการประเมิน S<sub>A</sub> จากจุดสำรวจการทรุดตัวจริงในสนาม</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VERIFICATION -->
+<section id="verify" style="background:var(--paper2)">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">07 — การสอบเทียบ (Verification)</span>
+      <h2>สอบเทียบเครื่องคำนวณกับกรณีจริงจากงานตีพิมพ์</h2>
+      <p>นำพารามิเตอร์จาก worked example จริงที่ตรวจสอบด้วยข้อมูลวัดในสนาม มาแทนในสูตรเดียวกับที่เครื่องมือใช้ แล้วเทียบกับค่า S<sub>max</sub> ที่ตีพิมพ์ (ยืนยันว่าเป็น engine เดียวกัน: ค่าตั้งต้นของเครื่องมือ = 8.0 มม. ตรงกับสคริปต์จำลอง 8.01 มม.)</p>
+    </div>
+
+    <div class="v-grid">
+      <div class="card">
+        <h3>① อุโมงค์เดี่ยว — เทียบ S<sub>max</sub> กับค่าตีพิมพ์ <span class="v-pass">ผ่าน &lt;0.3%</span></h3>
+        <div class="v-scroll"><table class="v-tbl">
+          <thead><tr><th>กรณี (ดินเหนียว)</th><th>อินพุตจากงานตีพิมพ์</th><th>เครื่องมือ</th><th>ตีพิมพ์</th><th>Δ</th></tr></thead>
+          <tbody>
+            <tr><td>Suzhou #1</td><td>D=6.6 ม. · i=9.915 ม. · V<sub>L</sub>=0.85%</td><td class="v-num">11.70 มม.</td><td class="v-num">11.73 มม.</td><td class="v-ok">0.25%</td></tr>
+            <tr><td>Suzhou #2</td><td>D=6.2 ม. · i=9.055 ม. · V<sub>L</sub>≈1.0%</td><td class="v-num">13.33 มม.</td><td class="v-num">13.33 มม.</td><td class="v-ok">0.0%</td></tr>
+          </tbody>
+        </table></div>
+        <p class="v-note">สูตรแกนกลาง S<sub>max</sub> = V<sub>L</sub>·(πD²/4)/(√2π·i) ให้ผลตรงกับค่าตีพิมพ์ภายใน 0.3%</p>
+      </div>
+
+      <div class="card">
+        <h3>② ค่า K (trough width) — เทียบกับค่าที่ back-calculate จากสนามจริง <span class="v-pass">สอดคล้อง</span></h3>
+        <div class="v-scroll"><table class="v-tbl">
+          <thead><tr><th>ชนิดดิน</th><th>ค่าจากสนามจริง</th><th>เครื่องมือ (K₅₀)</th><th>Δ</th></tr></thead>
+          <tbody>
+            <tr><td>เหนียว (fine)</td><td>K=0.484 · Suzhou (O'Reilly i=0.43H+1.1)</td><td class="v-num">0.48</td><td class="v-ok">0.8%</td></tr>
+            <tr><td>ทราย (coarse)</td><td>K≈0.35–0.40 · Milan Metro</td><td class="v-num">0.38</td><td class="v-ok">อยู่ในช่วง</td></tr>
+          </tbody>
+        </table></div>
+        <p class="v-note">ค่า K ในเครื่องมือสอดคล้องกับค่าที่ได้จากข้อมูลสนามจริงทั้งดินเหนียวและทราย</p>
+      </div>
+
+      <div class="card">
+        <h3>③ การซ้อนทับ 4 รูปแบบ — การบวกเชิงเส้นที่แม่นยำ <span class="v-pass">ถูกต้องตามโครงสร้าง</span></h3>
+        <div class="v-scroll"><table class="v-tbl">
+          <thead><tr><th>รูปแบบ</th><th>แต่ละอุโมงค์ (มม.)</th><th>รวม superposition</th><th>ตรวจสอบ</th></tr></thead>
+          <tbody>
+            <tr><td>อุโมงค์เดี่ยว</td><td>13.33</td><td class="v-num">13.33 มม.</td><td>หน่วยตั้งต้น</td></tr>
+            <tr><td>คู่ขนาน (d=20.5)</td><td>13.33 / 13.33</td><td class="v-num">14.68 มม.</td><td class="v-ok">รูป W (d/i=2.26) ✓</td></tr>
+            <tr><td>ซ้อนแนวดิ่ง (z=12,24)</td><td>20.91 / 10.46</td><td class="v-num">31.37 มม.</td><td class="v-ok">= บวกตรง ✓</td></tr>
+            <tr><td>เยื้อง (x=-7,12 · z=14,22)</td><td>17.92 / 11.41</td><td class="v-num">20.39 มม.</td><td class="v-ok">asymmetric ✓</td></tr>
+          </tbody>
+        </table></div>
+        <p class="v-note">การซ้อนทับเป็นการบวกเกาส์เซียนเชิงเส้นแบบแม่นยำ (กรณีซ้อนแนวดิ่งพิสูจน์ว่า รวม = ผลบวกเลขตรง ๆ 20.91+10.46=31.37) เมื่อสูตรอุโมงค์เดี่ยวถูกต้อง ทั้ง 4 รูปแบบจึงถูกต้องตามโครงสร้าง</p>
+      </div>
+
+      <div class="card v-verdict">
+        <h3>สรุป: เชื่อถือได้ พร้อมข้อควรระวังที่ต้องบอกตามตรง</h3>
+        <p><b>เชื่อถือได้</b> สำหรับสิ่งที่มันคำนวณ — สูตร Gaussian อุโมงค์เดี่ยวตรงกับงานตีพิมพ์ &lt;0.3%, ค่า K ตรงกับค่าสนามจริง, การซ้อนทับแม่นยำเชิงคณิตศาสตร์ แต่ต้องเข้าใจขอบเขต:</p>
+        <ol class="v-caveat">
+          <li><b>การซ้อนทับแบบง่ายเป็นค่าขั้นต่ำ</b> — งาน Suzhou เมื่อใช้วิธีดัดแปลง (เพิ่ม k=1+D/d เผื่อการรบกวนจากการขุดท่อหลัง) ค่าคู่ขนานสูงขึ้นเป็น ~19.9 มม. อุโมงค์ที่ขุดใกล้กันของจริงมักทรุดมากกว่าที่ superposition แบบง่ายทำนาย (Suwansawat &amp; Einstein 2007 ระบุไว้เช่นกัน)</li>
+          <li><b>สมมติ greenfield</b> — Suzhou วัดจริงได้เพียง 5.32 มม. (ต่ำกว่าที่ Peck ทำนายมาก) เพราะพื้นทางถูกเสริมด้วยเสาเข็มดินซีเมนต์ วิธีเชิงประจักษ์ไม่รวมผลการปรับปรุงดิน จึง over-predict ในกรณีที่มีการเสริมกำลัง</li>
+          <li><b>V<sub>L</sub> presets</b> ในเครื่องมือ (slurry 0.05–0.58%, EPB 0.15–0.77%) มาจากฐานข้อมูล TBM หน้าเจาะแบบมีแรงดัน ส่วนดินเหนียว Suzhou ใช้ 0.85–1.0% (สูงกว่า) — สำหรับดินเหนียวที่ควบคุมยาก preset อาจต่ำไป</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="v-cite">อ้างอิงหลัก: Li, Y.; Lin, J.; Yan, S.; Du, J. (2022). Modification of the Peck Formula for a Double-Track Shield Tunnel under Expressway Subgrade. <i>Symmetry</i> 14(9), 1904. — โครงการรถไฟฟ้า Suzhou ลอดใต้ทางด่วน Shanghai–Nanjing (ดินเหนียว, ตรวจสอบด้วยข้อมูลวัดจริง) · ค่าดินทรายจาก Milan Metro L5 (บทความต้นทางของหน้านี้)</div>
+  </div>
+</section>
+
+</main>
+
+<!-- REFERENCES -->
+<section id="refs" class="refs">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">08 — อ้างอิง</span>
+      <h2>เอกสารอ้างอิงหลัก</h2>
+      <p>ที่มา: บทความ “Settlement Predictions for TBM Tunnelling in Soft Ground on the Basis of Empirical Values”, tunnel 02/2024 (HIC Holzhäuser Ingenieur Consult)</p>
+    </div>
+    <div class="ref-list">
+      <div><b>[1]</b>Peck, R. B. (1969). Deep excavations and tunnelling in soft ground. 7th ICSMFE, Mexico City, 225–290.</div>
+      <div><b>[2]</b>O’Reilly, M. &amp; New, B. (1982). Settlements above tunnels in the UK. Tunnelling ’82, IMM, 173–181.</div>
+      <div><b>[3]</b>Mair, R. J. &amp; Taylor, R. N. (1997). Bored tunnelling in the urban environment. 14th ICSMFE, Hamburg, Vol. 4, 2353–2385.</div>
+      <div><b>[4]</b>Mair, R. J. (2013). Tunnelling and deep excavations: Ground movements and their effects. 15th ECSMGE, 39–70.</div>
+      <div><b>[5]</b>Leca, E. &amp; New, B. (2007). Settlements Induced by Tunneling in Soft Ground. TUST 22, 119–149.</div>
+      <div><b>[6]</b>Fargnoli, V., Boldini, D. &amp; Amorosi, A. (2013). TBM tunnelling-induced settlements in coarse-grained soils: Milan line 5. TUST 38, 336–347.</div>
+      <div><b>[7]</b>Park, H. et al. (2018). Monitoring &amp; Analysis of Ground Settlement — Slurry TBM. Advances in Civil Engineering, 2018.</div>
+      <div><b>[8]</b>Kirschke, D. &amp; Holzhäuser, J. (2008). Schildvortrieb — Katzenbergtunnel. 7. Geotechnik-Tag München, 147–168.</div>
+      <div><b>[9]</b>Fillibeck, J. (2012). Oberflächensetzungen beim Tunnelvortrieb im Lockergestein. Habil., TU München.</div>
+      <div><b>[10]</b>Wang, F. (2021). Empirical evidence for subsurface settlement in sand. Underground Space 6, 577–584.</div>
+      <div><b>[11]</b>Suwansawat, S. &amp; Einstein, H. H. (2007). Describing settlement troughs over twin tunnels using a superposition technique. J. Geotech. Geoenviron. Eng., 133(4), 445–468.</div>
+      <div><b>[12]</b>Li, Y.; Lin, J.; Yan, S.; Du, J. (2022). Modification of the Peck formula for a double-track shield tunnel under expressway subgrade. Symmetry 14(9), 1904. (ใช้สอบเทียบ — Suzhou, ดินเหนียว)</div>
+    </div>
+    <div class="disclaimer">
+      <b>ข้อจำกัดของเครื่องมือ:</b> เครื่องคำนวณนี้ใช้วิธีเชิงประจักษ์แบบ greenfield (Gaussian + superposition) เพื่อการเรียนรู้และประเมินเบื้องต้นเท่านั้น
+      ไม่ครอบคลุมผลของความแข็งเกร็งของอาคาร การทรุดตัวจากการยุบอัดตัวเนื่องจากการลดระดับน้ำ (consolidation) หรือปฏิสัมพันธ์ระหว่างอุโมงค์แบบไม่เชิงเส้น
+      สำหรับงานออกแบบจริงต้องใช้ค่าพารามิเตอร์ที่สอบเทียบกับข้อมูลเฉพาะพื้นที่ และพิจารณาวิธีเชิงตัวเลข (FEM) ประกอบ
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>Settlement Studio · สื่อการเรียนรู้เชิงโต้ตอบ</div>
+    <div class="small">อ้างอิงจาก tunnel 02/2024 — เพื่อการศึกษา</div>
+  </div>
+</footer>
+
+<div class="credit" aria-hidden="true">Prepared by TS</div>
 
 <script>
-(function(){
-  "use strict";
-  var ROW=3.00, OFFSET=3.00, BASE=ROW+OFFSET, R=3.15, TH=24, DMIN=6, DMAX=50;
-  var C={ink:'#16222E',soil:'#CBB187',soilHatch:'#B49865',sky:'#F4F8FB',
-         tunnel:'#26404F',tunnelFill:'#DCE4E8',row:'#5A6B78',offset:'#8A5CB4',
-         infl:'#1F6FB2',inflFill:'rgba(31,111,178,0.09)',
-         amber:'#E08A00',thr:'#C0392B',label:'#3A4A57',muted:'#7C8A96'};
+/* ================= ENGINE ================= */
+const SQRT_2PI = Math.sqrt(2*Math.PI);
+const VLQ = {
+  slurry:{p5:0.0005,p50:0.0031,p95:0.0058},
+  epb:   {p5:0.0015,p50:0.0041,p95:0.0077}
+};
+const KQ = {
+  coarse:{p5:0.30,p50:0.38,p95:0.45},
+  fine:  {p5:0.35,p50:0.48,p95:0.60},
+  mixed: {p5:0.35,p50:0.50,p95:0.65}
+};
+const GAMMA_W = 9.81; // kN/m³ (สำหรับบริบทหน่วยแรงในแนวดิ่ง — ไม่เข้าสมการการทรุดตัวเชิงประจักษ์)
+/* USCS – Unified Soil Classification System
+   grp = กลุ่มที่ใช้เลือกค่า K (coarse=เม็ดหยาบ/granular, fine=เม็ดละเอียด/cohesive, mixed=คละ)
+   gamma = หน่วยน้ำหนักรวมโดยประมาณ (kN/m³) แก้ไขได้ ใช้เป็นบริบทเท่านั้น */
+const USCS = {
+  GW:{name:'GW · กรวดคละขนาดดี',      cat:'กรวด (เม็ดหยาบ)', grp:'coarse', color:'#A99A7E', gamma:20},
+  GP:{name:'GP · กรวดคละขนาดไม่ดี',    cat:'กรวด (เม็ดหยาบ)', grp:'coarse', color:'#B3A488', gamma:19},
+  GM:{name:'GM · กรวดปนทรายแป้ง',      cat:'กรวด (เม็ดหยาบ)', grp:'coarse', color:'#A5A088', gamma:20},
+  GC:{name:'GC · กรวดปนดินเหนียว',     cat:'กรวด (เม็ดหยาบ)', grp:'mixed',  color:'#9C8E76', gamma:20},
+  SW:{name:'SW · ทรายคละขนาดดี',       cat:'ทราย (เม็ดหยาบ)', grp:'coarse', color:'#E4C87C', gamma:19},
+  SP:{name:'SP · ทรายคละขนาดไม่ดี',    cat:'ทราย (เม็ดหยาบ)', grp:'coarse', color:'#E9D28E', gamma:18},
+  SM:{name:'SM · ทรายปนทรายแป้ง',      cat:'ทราย (เม็ดหยาบ)', grp:'coarse', color:'#D9C695', gamma:19},
+  SC:{name:'SC · ทรายปนดินเหนียว',     cat:'ทราย (เม็ดหยาบ)', grp:'mixed',  color:'#CDB384', gamma:19.5},
+  ML:{name:'ML · ทรายแป้ง (silt)',     cat:'เม็ดละเอียด',     grp:'fine',   color:'#9DAE8F', gamma:18},
+  CL:{name:'CL · ดินเหนียว PI ต่ำ',    cat:'เม็ดละเอียด',     grp:'fine',   color:'#B07A50', gamma:18.5},
+  OL:{name:'OL · ดินอินทรีย์ PI ต่ำ',  cat:'เม็ดละเอียด',     grp:'fine',   color:'#8B7B5D', gamma:16},
+  MH:{name:'MH · ทรายแป้ง PI สูง',     cat:'เม็ดละเอียด',     grp:'fine',   color:'#94A48D', gamma:17},
+  CH:{name:'CH · ดินเหนียว PI สูง',    cat:'เม็ดละเอียด',     grp:'fine',   color:'#A26A4A', gamma:17.5},
+  OH:{name:'OH · ดินอินทรีย์ PI สูง',  cat:'เม็ดละเอียด',     grp:'fine',   color:'#70634A', gamma:15},
+  Pt:{name:'Pt · พีต/อินทรีย์สูง',     cat:'อินทรีย์สูง',     grp:'fine',   color:'#4F4733', gamma:11}
+};
+const GRP_TH = {coarse:'เม็ดหยาบ (granular)',fine:'เม็ดละเอียด (cohesive)',mixed:'คละเม็ด (mixed)'};
 
-  // world: xM in [-48,46], yM in [-6,58]
-  var X0=48, Y0=6, S=10;
-  function X(m){return ((m+X0)*S).toFixed(1);}
-  function Y(m){return ((m+Y0)*S).toFixed(1);}
-  var W=(46+48)*S, H=(58+6)*S;
-
-  function f(D){ return D<=TH ? D : TH + (D-TH)/2; }
-
-  function line(x1,y1,x2,y2,stroke,w,dash){
-    return '<line x1="'+X(x1)+'" y1="'+Y(y1)+'" x2="'+X(x2)+'" y2="'+Y(y2)+'" stroke="'+stroke+'" stroke-width="'+w+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+' />';
+function tunnelParams(t,K,VL){
+  const At=Math.PI*t.D*t.D/4;
+  const i =K*t.z;
+  const Vs=VL*At;
+  const smax=Vs/(SQRT_2PI*i);
+  return {At,i,Vs,smax};
+}
+function settlement(x,tunnels,K,VL){
+  let s=0;
+  for(const t of tunnels){const{i,smax}=tunnelParams(t,K,VL);const d=x-t.x;s+=smax*Math.exp(-(d*d)/(2*i*i));}
+  return s;
+}
+function curveStats(tunnels,K,VL,Xh){
+  let m=0,xm=0,g=0,prev=null,step=Xh/500;
+  for(let x=-Xh;x<=Xh;x+=step){
+    const s=settlement(x,tunnels,K,VL);
+    if(s>m){m=s;xm=x;}
+    if(prev!==null){const gr=Math.abs((s-prev)/step);if(gr>g)g=gr;}
+    prev=s;
   }
-  function txt(x,y,s,o){
-    o=o||{};
-    return '<text x="'+X(x)+'" y="'+Y(y)+'" font-family="'+(o.mono?"'DejaVu Sans Mono',monospace":"var(--thai)")+'" font-size="'+(o.size||13)+'" fill="'+(o.fill||C.label)+'"'
-      +(o.weight?' font-weight="'+o.weight+'"':'')+' text-anchor="'+(o.anchor||'start')+'"'
-      +(o.baseline?' dominant-baseline="'+o.baseline+'"':'')
-      +(o.rotate?' transform="rotate('+o.rotate+' '+X(x)+' '+Y(y)+')"':'')+'>'+s+'</text>';
+  return {smax_mm:m*1000, xmax:xm, slope:g};
+}
+
+/* ================= STATE ================= */
+const state={
+  tunnels:[{x:0,z:15,D:6.7,lin:0.30}],
+  soils:[
+    {uscs:'SM', th:4,  gamma:18},
+    {uscs:'SP', th:6,  gamma:18},
+    {uscs:'CL', th:8,  gamma:18.5},
+    {uscs:'SW', th:10, gamma:19},
+    {uscs:'GW', th:12, gamma:20}
+  ],
+  gwl:8, shield:'epb', kGroup:'auto', stage:1,
+  view:{Xh:40, Zmax:40}, active:null, driveCurve:'Pm'
+};
+
+/* ================= K resolution =================
+   ค่า K อิง "ชั้นดินที่แกนอุโมงค์ (ตื้นสุด) พาดผ่าน" ตาม USCS ของชั้นนั้น
+   → ความหนาชั้นดินจึงมีผลจริงต่อการเลือก K ผ่านความลึกสะสม */
+function governingLayer(){
+  const zt=Math.min(...state.tunnels.map(t=>t.z)); // แกนอุโมงค์ตื้นสุดคุมรูปหลุมที่ผิว
+  let d=0;
+  for(let i=0;i<state.soils.length;i++){
+    const top=d, bot=d+state.soils[i].th; d=bot;
+    if(zt<=bot+1e-9) return {idx:i, top, bot, uscs:state.soils[i].uscs, grp:USCS[state.soils[i].uscs].grp, axis:zt};
   }
+  const li=state.soils.length-1, s=state.soils[li];
+  return {idx:li, top:d-s.th, bot:d, uscs:s.uscs, grp:USCS[s.uscs].grp, axis:zt, below:true};
+}
+function autoGroup(){ return governingLayer().grp; }
+function activeGroup(){ return state.kGroup==='auto'?autoGroup():state.kGroup; }
+function getK(){ return KQ[activeGroup()]; }
+function getVL(){ return VLQ[state.shield]; }
 
-  // influence boundary path, side=+1/-1: ROW@axis -> 3m offset -> slope base -> slope -> surface
-  function influencePath(side,D){
-    var p=[[side*ROW,D],[side*BASE,D]];   // horizontal offset shoulder
-    if(D<=TH){ p.push([side*(BASE+D),0]); }
-    else{ p.push([side*(BASE+(D-TH)/2),TH]); p.push([side*(BASE+(D-TH)/2+TH),0]); }
-    return p;
+/* หน่วยแรงในแนวดิ่งที่ความลึกใด ๆ (บริบทเชิงธรณีเทคนิค — ไม่เข้าสมการ s_max) */
+function overburden(depth){
+  let sv=0, d=0;
+  for(const s of state.soils){
+    const top=d, bot=d+s.th; d=bot;
+    const h=Math.max(0, Math.min(bot,depth)-top);
+    if(h>0) sv+=(s.gamma||18)*h;
+    if(bot>=depth) break;
   }
+  if(depth>d){ const last=state.soils[state.soils.length-1]; sv+=(last.gamma||18)*(depth-d); }
+  const u=depth>state.gwl?GAMMA_W*(depth-state.gwl):0;
+  return {sv, u, sve:sv-u};
+}
 
-  function render(D){
-    var spread=f(D), surf=BASE+spread, deep=D>TH;
-    var s='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ภาพตัดขวางเขตป้องกันอุโมงค์">';
-
-    s+='<rect x="0" y="0" width="'+W+'" height="'+Y(0)+'" fill="'+C.sky+'"/>';
-    s+='<rect x="0" y="'+Y(0)+'" width="'+W+'" height="'+(H-Y(0))+'" fill="'+C.soil+'" opacity="0.28"/>';
-
-    // influence wedge fill both sides
-    [1,-1].forEach(function(side){
-      var p=influencePath(side,D);
-      var d='M '+X(side*ROW)+' '+Y(0);
-      p.forEach(function(pt){ d+=' L '+X(pt[0])+' '+Y(pt[1]); });
-      d+=' Z';
-      s+='<path d="'+d+'" fill="'+C.inflFill+'"/>';
-    });
-
-    // threshold 24 m
-    s+=line(-48,TH,46,TH,C.thr,1.4,'7 5');
-    s+=txt(-46.5,TH-0.8,'24.00 ม.',{mono:true,size:12,fill:C.thr,weight:700});
-
-    // ground surface + hatch
-    s+=line(-48,0,46,0,C.ink,2.2);
-    var hatch='';
-    for(var hx=-47;hx<46;hx+=1.4){ hatch+=line(hx,0.05,hx+0.9,1.4,C.soilHatch,1.4); }
-    s+=hatch;
-
-    // influence lines + kink + offset shoulder highlight
-    [1,-1].forEach(function(side){
-      var p=influencePath(side,D);
-      // offset shoulder drawn in its own colour
-      s+=line(p[0][0],p[0][1],p[1][0],p[1][1],C.offset,3.2);
-      // slope part
-      var d='M '+X(p[1][0])+' '+Y(p[1][1]);
-      for(var i=2;i<p.length;i++) d+=' L '+X(p[i][0])+' '+Y(p[i][1]);
-      s+='<path d="'+d+'" fill="none" stroke="'+C.infl+'" stroke-width="2.4" stroke-linejoin="round"/>';
-      // slope base node
-      s+='<circle cx="'+X(p[1][0])+'" cy="'+Y(p[1][1])+'" r="3.2" fill="'+C.offset+'"/>';
-      if(deep){ s+='<circle cx="'+X(p[2][0])+'" cy="'+Y(p[2][1])+'" r="3.4" fill="#fff" stroke="'+C.infl+'" stroke-width="2"/>'; }
-    });
-    // slope tags (right side)
-    (function(){
-      var p=influencePath(1,D);
-      if(!deep){
-        var mx=(p[1][0]+p[2][0])/2, my=(p[1][1]+p[2][1])/2;
-        s+=txt(mx+1.2,my,'1:1',{mono:true,size:13,fill:C.infl,weight:700});
-      }else{
-        var lx=(p[2][0]+p[3][0])/2, ly=(p[2][1]+p[3][1])/2;
-        s+=txt(lx+1.2,ly,'1:1',{mono:true,size:13,fill:C.infl,weight:700});
-        var ux=(p[1][0]+p[2][0])/2, uy=(p[1][1]+p[2][1])/2;
-        s+=txt(ux+1.4,uy,'2:1',{mono:true,size:13,fill:C.infl,weight:700});
-      }
-    })();
-
-    // offset dimension at axis level (right side)
-    var yo=D+2.2;
-    s+=line(ROW,D,ROW,yo+0.6,C.offset,1,'3 2');
-    s+=line(BASE,D,BASE,yo+0.6,C.offset,1,'3 2');
-    s+=line(ROW,yo,BASE,yo,C.offset,1.4);
-    s+=line(ROW,yo-0.5,ROW,yo+0.5,C.offset,1.4);
-    s+=line(BASE,yo-0.5,BASE,yo+0.5,C.offset,1.4);
-    s+=txt((ROW+BASE)/2,yo+1.8,'offset 3.00 ม.',{mono:true,size:11,fill:C.offset,anchor:'middle',weight:700});
-
-    // ROW vertical dashed lines
-    [1,-1].forEach(function(side){ s+=line(side*ROW,0,side*ROW,D,C.row,1.4,'5 4'); });
-
-    // tunnel centreline
-    s+=line(0,-2,0,D+R+3,C.tunnel,1.2,'2 3');
-    s+=txt(0,-2.5,'\u20B5',{mono:true,size:15,fill:C.tunnel,anchor:'middle'});
-
-    // tunnel
-    s+='<circle cx="'+X(0)+'" cy="'+Y(D)+'" r="'+(R*S)+'" fill="'+C.tunnelFill+'" stroke="'+C.tunnel+'" stroke-width="2.4"/>';
-    s+=line(-1,D,1,D,C.tunnel,1.5); s+=line(0,D-1,0,D+1,C.tunnel,1.5);
-    s+=line(-R,D-R-1.4,R,D-R-1.4,C.tunnel,1);
-    s+=line(-R,D-R-2,-R,D-R-0.8,C.tunnel,1); s+=line(R,D-R-2,R,D-R-0.8,C.tunnel,1);
-    s+=txt(0,D-R-2,'6.30 ม.',{mono:true,size:11,fill:C.tunnel,anchor:'middle'});
-    s+=txt(R+1,D,'แนวแกนอุโมงค์ (Tunnel Axis)',{size:12,fill:C.label,baseline:'middle'});
-
-    // amber protection strip on surface (ROW -> surface point)
-    [1,-1].forEach(function(side){
-      s+=line(side*ROW,0,side*surf,0,C.amber,5);
-      s+='<circle cx="'+X(side*surf)+'" cy="'+Y(0)+'" r="3.4" fill="'+C.amber+'"/>';
-    });
-
-    // top brackets
-    var yb=-3.8, tick=0.7;
-    function brk(x1,x2,y,color,label){
-      return line(x1,y,x2,y,color,1.6)+line(x1,y-tick,x1,y+tick,color,1.6)+line(x2,y-tick,x2,y+tick,color,1.6)
-        +txt((x1+x2)/2,y-0.9,label,{mono:true,size:11.5,fill:color,anchor:'middle',weight:700});
-    }
-    // centreline -> ROW (3.00) both sides
-    s+=brk(0,ROW,yb,C.row,'3.00');
-    s+=brk(-ROW,0,yb,C.row,'3.00');
-    // ROW -> surface (protection) both sides
-    s+=brk(ROW,surf,yb,C.amber,'Protection '+(OFFSET+spread).toFixed(2)+' ม.');
-    s+=brk(-surf,-ROW,yb,C.amber,'Protection '+(OFFSET+spread).toFixed(2)+' ม.');
-
-    // depth dimension (outside left surface point)
-    var xd=-surf-2;
-    s+=line(xd,0,xd,D,C.ink,1.4);
-    s+=line(xd-0.8,0,xd+0.8,0,C.ink,1.4); s+=line(xd-0.8,D,xd+0.8,D,C.ink,1.4);
-    s+=txt(xd-1.2,D/2,'D = '+D.toFixed(1)+' ม.',{mono:true,size:12.5,fill:C.ink,anchor:'middle',weight:700,rotate:-90,baseline:'middle'});
-
-    // labels
-    s+=txt(-47.5,-0.8,'ระดับผิวดิน (Existing Ground Level)',{size:12,fill:C.label});
-    s+=txt(BASE+spread*0.5, deep?14:Math.min(D*0.55,12),'Zone of Influence',{size:11.5,fill:C.infl,weight:700});
-
-    s+='</svg>';
-    return s;
-  }
-
-  var slider=document.getElementById('depth');
-  var box=document.getElementById('diagram');
-  function up(D){
-    D=Math.round(D*2)/2; if(D<DMIN)D=DMIN; if(D>DMAX)D=DMAX;
-    slider.value=D;
-    var spread=f(D), fromCentre=BASE+spread, fromRow=OFFSET+spread, deep=D>TH;
-    box.innerHTML=render(D);
-
-    document.getElementById('cval').textContent=fromCentre.toFixed(2);
-    document.getElementById('rval').textContent=fromRow.toFixed(2);
-    document.getElementById('dval').textContent=D.toFixed(1);
-
-    var mode=document.getElementById('mode');
-    if(deep){
-      mode.className='badge dp';
-      mode.textContent='โหมดลึก · กฎฝั่งซ้าย (D₂ > 24 ม.)';
-      document.getElementById('comp').textContent='= 3.00 (ROW) + 3.00 (offset) + [24 + ('+D.toFixed(1)+'−24)/2] = '+fromCentre.toFixed(2);
-    }else{
-      mode.className='badge sh';
-      mode.textContent='โหมดตื้น · กฎฝั่งขวา (D₁ ≤ 24 ม.)';
-      document.getElementById('comp').textContent='= 3.00 (ROW) + 3.00 (offset) + '+spread.toFixed(2)+' (ลาด 1:1) = '+fromCentre.toFixed(2);
-    }
-    var pct=((D-DMIN)/(DMAX-DMIN)*100).toFixed(1);
-    slider.style.background='linear-gradient(90deg,'+(deep?'#B4560A':'#1F7A54')+' 0 '+pct+'%, var(--line) '+pct+'% 100%)';
-    Array.prototype.forEach.call(document.querySelectorAll('.chip'),function(c){
-      c.setAttribute('aria-pressed', parseFloat(c.dataset.d)===D ? 'true':'false');
-    });
-  }
-
-  slider.addEventListener('input',function(){up(parseFloat(slider.value));});
-  document.getElementById('minus').addEventListener('click',function(){up(parseFloat(slider.value)-0.5);});
-  document.getElementById('plus').addEventListener('click',function(){up(parseFloat(slider.value)+0.5);});
-  document.getElementById('presets').addEventListener('click',function(e){
-    var c=e.target.closest('.chip'); if(c) up(parseFloat(c.dataset.d));
+/* ================= UI: tunnels ================= */
+const T_COLORS=['#FF5A6E','#3D9BFF','#B77BFF','#25D6A0']; // สว่าง คมชัด แยกจากสีน้ำ(ฟ้าอมเขียว)และสีรวม(ทอง)
+const COMB_COLOR='#FFC23C';   // เส้นรวม (superposition) — สีทองสว่าง
+const HALO='#0A1826';         // ขอบเข้มเพื่อความคมชัดบนทุกพื้นหลัง
+/* วาดเส้นพร้อมขอบเข้ม (halo) ให้เห็นชัดบนชั้นดินสีอ่อน */
+function haloLine(dPath,color,w,dash){
+  const da=dash?` stroke-dasharray="${dash}"`:'';
+  return `<path d="${dPath}" fill="none" stroke="${HALO}" stroke-width="${w+3}"${da} stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>`
+       + `<path d="${dPath}" fill="none" stroke="${color}" stroke-width="${w}"${da} stroke-linecap="round" stroke-linejoin="round"/>`;
+}
+/* ตัวอักษรพร้อมขอบเข้ม อ่านได้ชัดบนทุกพื้นหลัง */
+function haloText(x,y,anchor,size,weight,color,txt,fam){
+  return `<text x="${x}" y="${y}" text-anchor="${anchor}" font-family="${fam||'IBM Plex Mono'}" font-size="${size}" font-weight="${weight||400}" fill="${color}" stroke="${HALO}" stroke-width="3.4" paint-order="stroke" stroke-linejoin="round">${txt}</text>`;
+}
+function renderTunnels(){
+  const box=document.getElementById('tunnelList'); box.innerHTML='';
+  state.tunnels.forEach((t,idx)=>{
+    const row=document.createElement('div'); row.className='trow';
+    const lin=(t.lin==null?0.30:t.lin);
+    const Di=Math.max(0,(t.D-2*lin));
+    row.innerHTML=`
+      <div class="trow-1">
+        <div class="t-lab" style="background:${T_COLORS[idx%4]}">${idx+1}</div>
+        <div><span class="mini">D ขุดเจาะ (ม.)</span><input type="number" step="0.1" min="2" max="16" value="${t.D}" data-k="D" data-i="${idx}"></div>
+        <div><span class="mini">x (ม.)</span><input type="number" step="0.5" value="${t.x}" data-k="x" data-i="${idx}"></div>
+        <div><span class="mini">z แกน (ม.)</span><input type="number" step="0.5" min="3" value="${t.z}" data-k="z" data-i="${idx}"></div>
+        ${state.tunnels.length>1?`<button class="x-btn" data-del="${idx}">×</button>`:'<div></div>'}
+      </div>
+      <div class="trow-2">
+        <span class="mini">ความหนา lining t (ม.)</span>
+        <input type="number" step="0.05" min="0" max="1" value="${lin}" data-k="lin" data-i="${idx}">
+        <span class="mini" style="margin-left:auto">Ø ภายใน ≈ <b class="mono">${Di.toFixed(2)}</b> ม.</span>
+      </div>`;
+    box.appendChild(row);
   });
-  up(18);
-})();
+  document.getElementById('tCount').textContent=state.tunnels.length+' ท่อ';
+  box.querySelectorAll('input').forEach(inp=>inp.addEventListener('input',e=>{
+    const i=+e.target.dataset.i,k=e.target.dataset.k;let v=parseFloat(e.target.value);
+    if(isNaN(v))return; state.tunnels[i][k]=v; clampTunnel(state.tunnels[i]);
+    const row=e.target.closest('.trow');
+    if(row){const t=state.tunnels[i],lin=(t.lin==null?0.3:t.lin),b=row.querySelector('.trow-2 b.mono'); if(b) b.textContent=Math.max(0,(t.D-2*lin)).toFixed(2);}
+    draw();
+  }));
+  box.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',e=>{
+    state.tunnels.splice(+e.target.dataset.del,1); renderTunnels(); draw();
+  }));
+}
+function clampTunnel(t){
+  const {Xh,Zmax}=state.view;
+  t.D=Math.max(2,Math.min(16,t.D));
+  t.x=Math.max(-Xh+t.D/2, Math.min(Xh-t.D/2, t.x));
+  t.z=Math.max(t.D/2+0.5, Math.min(Zmax-t.D/2, t.z));
+  if(t.lin==null) t.lin=0.30;
+  t.lin=Math.max(0, Math.min(t.D/2-0.05, t.lin));
+}
+
+/* ================= UI: soils ================= */
+function uscsOptions(sel){
+  let opts='',curCat=null;
+  for(const key in USCS){
+    const u=USCS[key];
+    if(u.cat!==curCat){ if(curCat!==null)opts+='</optgroup>'; opts+=`<optgroup label="${u.cat}">`; curCat=u.cat; }
+    opts+=`<option value="${key}" ${sel===key?'selected':''}>${u.name}</option>`;
+  }
+  if(curCat!==null)opts+='</optgroup>';
+  return opts;
+}
+function renderSoils(){
+  const box=document.getElementById('soilList'); box.innerHTML='';
+  const gov=governingLayer();
+  state.soils.forEach((s,idx)=>{
+    const row=document.createElement('div'); row.className='srow';
+    const g=USCS[s.uscs].grp;
+    const isGov=idx===gov.idx;
+    row.innerHTML=`
+      <div class="srow-top">
+        <select data-i="${idx}" data-k="uscs">${uscsOptions(s.uscs)}</select>
+        ${state.soils.length>1?`<button class="x-btn" data-dels="${idx}">×</button>`:'<div style="width:26px"></div>'}
+      </div>
+      <div class="srow-params">
+        <label class="pf">หนา<input type="number" step="0.5" min="0.5" value="${s.th}" data-i="${idx}" data-k="th"><span class="u">ม.</span></label>
+        <label class="pf">γ<input type="number" step="0.5" min="8" max="24" value="${s.gamma}" data-i="${idx}" data-k="gamma"><span class="u">kN/m³</span></label>
+        <span class="kbadge ${g}">K: ${GRP_TH[g]}${isGov?' ◄ แกนอุโมงค์':''}</span>
+      </div>`;
+    box.appendChild(row);
+  });
+  box.querySelectorAll('select,input').forEach(el=>el.addEventListener('input',e=>{
+    const i=+e.target.dataset.i,k=e.target.dataset.k;
+    if(k==='th') state.soils[i].th=Math.max(0.5,parseFloat(e.target.value)||0.5);
+    else if(k==='gamma') state.soils[i].gamma=Math.max(8,Math.min(24,parseFloat(e.target.value)||18));
+    else if(k==='uscs'){ state.soils[i].uscs=e.target.value; state.soils[i].gamma=USCS[e.target.value].gamma; renderSoils(); }
+    draw();
+  }));
+  box.querySelectorAll('[data-dels]').forEach(b=>b.addEventListener('click',e=>{
+    state.soils.splice(+e.target.dataset.dels,1); renderSoils(); draw();
+  }));
+}
+/* อัปเดตป้ายกลุ่ม K + เครื่องหมาย "◄ แกนอุโมงค์" ในรายการชั้นดินให้ตรงกับสถานะปัจจุบัน
+   (เรียกจาก draw() ทุกครั้ง → สอดคล้องแบบ real-time ไม่ว่าจะเปลี่ยนความหนา ลากอุโมงค์ หรือแก้ z) */
+function refreshSoilBadges(){
+  const box=document.getElementById('soilList'); if(!box)return;
+  const rows=box.querySelectorAll('.srow'); if(!rows.length)return;
+  const gov=governingLayer();
+  rows.forEach((row,idx)=>{
+    const s=state.soils[idx]; if(!s||!USCS[s.uscs])return;
+    const g=USCS[s.uscs].grp, badge=row.querySelector('.kbadge');
+    if(badge){ badge.className='kbadge '+g; badge.textContent=`K: ${GRP_TH[g]}${idx===gov.idx?' ◄ แกนอุโมงค์':''}`; }
+  });
+}
+
+/* ================= PRESETS ================= */
+function applyPreset(p){
+  const zt=14, D=6.7;
+  if(p==='single') state.tunnels=[{x:0,z:zt,D}];
+  if(p==='parallel') state.tunnels=[{x:-8,z:zt,D},{x:8,z:zt,D}];
+  if(p==='stacked') state.tunnels=[{x:0,z:11,D},{x:0,z:23,D}];
+  if(p==='offset') state.tunnels=[{x:-7,z:12,D},{x:7,z:22,D}];
+  state.view={Xh:40,Zmax:40};
+  state.tunnels.forEach(clampTunnel);
+  document.querySelectorAll('#presets .preset').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
+  renderTunnels(); draw();
+}
+
+/* ================= VIEW GEOMETRY ================= */
+const VB={W:1000,H:620,mL:64,mR:30,mT:110,mB:34}; // mT reserved sky for trough
+function scales(){
+  const {Xh,Zmax}=state.view;
+  const plotW=VB.W-VB.mL-VB.mR;
+  const groundPx=VB.mT;
+  const plotH=VB.H-groundPx-VB.mB;
+  return {
+    Xh,Zmax,plotW,groundPx,plotH,
+    sx:xw=>VB.mL+(xw+Xh)/(2*Xh)*plotW,
+    sz:d=>groundPx+d/Zmax*plotH,
+    ix:px=>((px-VB.mL)/plotW)*2*Xh-Xh,
+    iz:py=>((py-groundPx)/plotH)*Zmax
+  };
+}
+
+/* ================= DRAW SECTION ================= */
+function draw(){
+  const sc=scales();
+  const K=getK(), VL=getVL();
+  // decide drive curve params
+  const curves=predictionCurves();
+  const drive=curves.find(c=>c.key===state.driveCurve)||curves[1]||curves[0];
+
+  let svg='';
+  // defs
+  svg+=`<defs>
+    <linearGradient id="troughG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFC23C" stop-opacity=".30"/>
+      <stop offset="1" stop-color="#FFC23C" stop-opacity=".05"/>
+    </linearGradient>
+    <pattern id="waterH" width="8" height="8" patternTransform="rotate(0)" patternUnits="userSpaceOnUse">
+      <rect width="8" height="8" fill="#2E9BC7" opacity="0.10"/>
+    </pattern>
+  </defs>`;
+
+  // strata
+  let d=0;
+  const bottomPx=sc.sz(sc.Zmax);
+  const gov=governingLayer();
+  state.soils.forEach((s,idx)=>{
+    const top=sc.sz(Math.min(d,sc.Zmax));
+    d+=s.th;
+    const isLast=idx===state.soils.length-1;
+    const bot=isLast?bottomPx:sc.sz(Math.min(d,sc.Zmax));
+    if(top>=bottomPx) return;
+    const b=Math.min(bot,bottomPx);
+    svg+=`<rect x="${VB.mL}" y="${top}" width="${sc.plotW}" height="${Math.max(0,b-top)}" fill="${USCS[s.uscs].color}" opacity="0.9"/>`;
+    if(idx===gov.idx){ // ไฮไลต์ชั้นที่แกนอุโมงค์พาดผ่าน (ชั้นที่กำหนดค่า K)
+      svg+=`<rect x="${VB.mL}" y="${top}" width="${sc.plotW}" height="${Math.max(0,b-top)}" fill="none" stroke="#14243B" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.55"/>`;
+    }
+    if(b-top>18){
+      svg+=haloText(VB.mL+10, top+19, 'start', 15, 700, '#FFFFFF', s.uscs, 'IBM Plex Mono');
+      if(b-top>36){
+        svg+=haloText(VB.mL+10, top+36, 'start', 12, 500, '#EAF2FA', `หนา ${s.th} ม. · γ=${Number(s.gamma).toFixed(1)} kN/m³${idx===gov.idx?' · ชั้นกำหนด K':''}`, 'IBM Plex Sans Thai');
+      }
+    }
+    svg+=`<line x1="${VB.mL}" y1="${top}" x2="${VB.W-VB.mR}" y2="${top}" stroke="#00000018" stroke-width="1"/>`;
+  });
+  // extend last color to bottom already handled
+
+  // groundwater overlay + line
+  const gwlPx=sc.sz(Math.min(state.gwl,sc.Zmax));
+  svg+=`<rect x="${VB.mL}" y="${gwlPx}" width="${sc.plotW}" height="${bottomPx-gwlPx}" fill="url(#waterH)"/>`;
+  svg+=`<g id="gwlHandle" style="cursor:ns-resize">
+    <line x1="${VB.mL}" y1="${gwlPx}" x2="${VB.W-VB.mR}" y2="${gwlPx}" stroke="#37B7E0" stroke-width="2.4" stroke-dasharray="3 4"/>
+    <path d="M${VB.mL+14},${gwlPx} l7,-11 l-14,0 z" fill="#37B7E0"/>
+    <rect x="${VB.mL}" y="${gwlPx-7}" width="${sc.plotW}" height="14" fill="transparent"/>
+    ${haloText(VB.W-VB.mR-6,gwlPx-6,'end',11,600,'#7FDcF6',`GWL ${state.gwl.toFixed(1)} ม.`)}
+  </g>`;
+
+  // depth axis ticks
+  for(let z=0;z<=sc.Zmax;z+=10){
+    const y=sc.sz(z);
+    svg+=`<line x1="${VB.mL-5}" y1="${y}" x2="${VB.mL}" y2="${y}" stroke="#8FA2B4" stroke-width="1.2"/>
+      <text x="${VB.mL-9}" y="${y+4}" text-anchor="end" font-family="IBM Plex Mono" font-size="12" fill="#5A6B7C">${z}</text>`;
+  }
+  svg+=`<text x="20" y="${sc.groundPx+sc.plotH/2}" text-anchor="middle" font-family="IBM Plex Sans Thai" font-size="14.5" font-weight="600" fill="#33475B" transform="rotate(-90 20 ${sc.groundPx+sc.plotH/2})">ความลึกจากผิวดิน (ม.)</text>`;
+
+  // ground line
+  svg+=`<line x1="${VB.mL}" y1="${sc.groundPx}" x2="${VB.W-VB.mR}" y2="${sc.groundPx}" stroke="#3A5068" stroke-width="2.5"/>`;
+  // x ticks (distance along surface)
+  for(let x=-sc.Xh;x<=sc.Xh;x+=10){
+    const px=sc.sx(x);
+    svg+=`<line x1="${px}" y1="${sc.groundPx}" x2="${px}" y2="${sc.groundPx+5}" stroke="#7C90A6"/>`;
+    svg+=haloText(px,sc.groundPx+20,'middle',12,600,'#E8EFF6',`${x}`);
+  }
+  // x-axis title (centred, in the sky band just above the ground line)
+  svg+=`<text x="${VB.mL+sc.plotW/2}" y="${sc.groundPx-10}" text-anchor="middle" font-family="IBM Plex Sans Thai" font-size="14.5" font-weight="600" fill="#33475B">ระยะตามขวางจากแนวศูนย์กลาง (ม.)</text>`;
+
+  // settlement envelope (Pu..Po or Pk band) — light fill between min & max curves
+  const N=180;
+  const xs=[]; for(let k=0;k<=N;k++) xs.push(-sc.Xh+2*sc.Xh*k/N);
+  // exaggeration: fit driving smax to ~78px
+  const driveStat=curveStats(state.tunnels,drive.K,drive.VL,sc.Xh);
+  const maxAll=Math.max(driveStat.smax_mm, ...curves.map(c=>c.stat.smax_mm),0.5);
+  const EX=Math.min(90/Math.max(maxAll,0.5), 40); // px per mm
+  // envelope from all curves
+  let hi=xs.map(x=>Math.max(...curves.map(c=>settlement(x,state.tunnels,c.K,c.VL))));
+  let lo=xs.map(x=>Math.min(...curves.map(c=>settlement(x,state.tunnels,c.K,c.VL))));
+  const yOf=(s_m)=>sc.groundPx+s_m*1000*EX;
+  let pHi='',pLo='';
+  xs.forEach((x,k)=>{pHi+=(k?'L':'M')+sc.sx(x).toFixed(1)+','+yOf(hi[k]).toFixed(1)+' ';});
+  for(let k=xs.length-1;k>=0;k--){pLo+='L'+sc.sx(xs[k]).toFixed(1)+','+yOf(lo[k]).toFixed(1)+' ';}
+  svg+=`<path d="${pHi}${pLo}Z" fill="${COMB_COLOR}" opacity="0.10"/>`;
+
+  // driving deformed surface (filled trough)
+  let dp='M'+sc.sx(-sc.Xh).toFixed(1)+','+sc.groundPx+' ';
+  xs.forEach(x=>{const s=settlement(x,state.tunnels,drive.K,drive.VL);dp+='L'+sc.sx(x).toFixed(1)+','+yOf(s).toFixed(1)+' ';});
+  dp+='L'+sc.sx(sc.Xh).toFixed(1)+','+sc.groundPx+' Z';
+  svg+=`<path d="${dp}" fill="url(#troughG)"/>`;
+  // individual tunnel troughs — each in its own bright colour + dark halo (shown when >1 tunnel)
+  if(state.tunnels.length>1){
+    state.tunnels.forEach((t,j)=>{
+      let ci='';
+      xs.forEach((x,k)=>{const s=contrib(x,t,drive.K,drive.VL);ci+=(k?'L':'M')+sc.sx(x).toFixed(1)+','+yOf(s).toFixed(1)+' ';});
+      svg+=haloLine(ci,T_COLORS[j%4],1.6,'8 5');
+    });
+  }
+  // combined (superposition) curve line — bright gold, on top (thin but clear via halo)
+  let cl='';
+  xs.forEach((x,k)=>{const s=settlement(x,state.tunnels,drive.K,drive.VL);cl+=(k?'L':'M')+sc.sx(x).toFixed(1)+','+yOf(s).toFixed(1)+' ';});
+  svg+=haloLine(cl,COMB_COLOR,2.3);
+  // per-tunnel peak markers + settlement values (with halo)
+  if(state.tunnels.length>1){
+    state.tunnels.forEach((t,j)=>{
+      const sj=tunnelParams(t,drive.K,drive.VL).smax*1000;
+      const px=sc.sx(t.x), py=yOf(sj/1000);
+      svg+=`<circle cx="${px}" cy="${py}" r="4" fill="${T_COLORS[j%4]}" stroke="${HALO}" stroke-width="1.5"/>`;
+      svg+=haloText(px,py+16,'middle',12,700,T_COLORS[j%4],`T${j+1} = ${sj.toFixed(1)} มม.`);
+    });
+  }
+  // combined peak marker + value (with halo)
+  const cMax=driveStat.smax_mm, cX=driveStat.xmax, cPy=yOf(cMax/1000);
+  svg+=`<circle cx="${sc.sx(cX)}" cy="${cPy}" r="5" fill="${COMB_COLOR}" stroke="${HALO}" stroke-width="1.5"/>`;
+  svg+=haloText(sc.sx(cX),cPy+(state.tunnels.length>1?-12:18),'middle',13,700,COMB_COLOR,`${state.tunnels.length>1?'รวม':'s_max'} = ${cMax.toFixed(1)} มม.`);
+  // exaggeration marker
+  svg+=haloText(VB.W-VB.mR,sc.groundPx-9,'end',11,500,'#FFD98A',`แนวดิ่งขยาย ×${EX.toFixed(1)} px/มม.`);
+
+  // in-figure legend (in the light sky band)
+  let lgY=26, lgX=VB.mL+6;
+  const lgLabel=state.tunnels.length>1?'เส้นรวม (superposition)':'การทรุดตัวที่ผิวดิน';
+  svg+=`<rect x="${lgX-6}" y="${lgY-16}" width="${state.tunnels.length>1?314:214}" height="26" rx="7" fill="#0A1826" opacity="0.72"/>`;
+  svg+=`<line x1="${lgX}" y1="${lgY-3}" x2="${lgX+26}" y2="${lgY-3}" stroke="${COMB_COLOR}" stroke-width="3.6" stroke-linecap="round"/>`;
+  svg+=`<text x="${lgX+32}" y="${lgY+1}" font-family="IBM Plex Sans Thai" font-size="12.5" font-weight="600" fill="#FFE7B0">${lgLabel}</text>`;
+  if(state.tunnels.length>1){
+    svg+=`<line x1="${lgX+196}" y1="${lgY-3}" x2="${lgX+222}" y2="${lgY-3}" stroke="#FFFFFF" stroke-width="2.4" stroke-dasharray="7 5" stroke-linecap="round"/>`;
+    svg+=`<text x="${lgX+228}" y="${lgY+1}" font-family="IBM Plex Sans Thai" font-size="12.5" font-weight="600" fill="#D6E2EE">แต่ละอุโมงค์</text>`;
+  }
+
+  // tunnels (draggable)
+  state.tunnels.forEach((t,idx)=>{
+    const cx=sc.sx(t.x), cy=sc.sz(t.z), r=(t.D/2)/sc.Zmax*sc.plotH;
+    const col=T_COLORS[idx%4];
+    // axis line to surface + depth dimension
+    svg+=`<line x1="${cx}" y1="${sc.groundPx}" x2="${cx}" y2="${cy}" stroke="${col}" stroke-width="1.5" stroke-dasharray="3 4" opacity="0.85"/>`;
+    // depth label placed beside the axis line, at mid-depth (offset to avoid the line)
+    const midY=(sc.groundPx+cy)/2, dLabX=cx+(t.x<sc.Xh*0.6?8:-8), dAnchor=(t.x<sc.Xh*0.6?'start':'end');
+    svg+=haloText(dLabX, midY+4, dAnchor, 11.5, 700, col, `ลึก ${t.z} ม.`, 'IBM Plex Mono');
+    svg+=`<g class="tunnel" data-i="${idx}" style="cursor:grab">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="${col}" fill-opacity="0.22" stroke="${HALO}" stroke-width="5"/>
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${col}" stroke-width="3"/>
+      <circle cx="${cx}" cy="${cy}" r="${Math.max(2,r*0.12)}" fill="#fff"/>
+      <line x1="${cx-r*0.5}" y1="${cy}" x2="${cx+r*0.5}" y2="${cy}" stroke="#fff" stroke-width="1.2" opacity="0.8"/>
+      <circle cx="${cx}" cy="${cy}" r="${r+3}" fill="transparent"/>
+      ${haloText(cx,cy+r+18,'middle',12.5,700,col,`T${idx+1} · Ø${t.D} ม.`,'Space Grotesk')}
+    </g>`;
+  });
+
+  document.getElementById('svgSection').innerHTML=svg;
+  document.getElementById('diagram').style.setProperty('--gl',(sc.groundPx/VB.H*100)+'%');
+  updateReadout(sc);
+  updateSectionValues(drive,driveStat);
+  updateResults(curves);
+  renderHandCalc(curves);
+  drawProfile(curves);
+  drawSuperposition(curves);
+  drawVolumeIntegration(curves);
+  refreshSoilBadges();
+  attachDrag();
+}
+
+/* ================= PREDICTION CURVES ================= */
+function predictionCurves(){
+  const K=getK(), VL=getVL();
+  let arr;
+  if(state.stage===1){
+    arr=[
+      {key:'Pu',label:'Pᵤ ต่ำ',cls:'badge-u',VL:VL.p5, K:K.p50, vlq:'5%',kq:'50%'},
+      {key:'Pm',label:'Pₘ กลาง',cls:'badge-m',VL:VL.p50,K:K.p50, vlq:'50%',kq:'50%'},
+      {key:'Po',label:'Pₒ สูง',cls:'badge-o',VL:VL.p95,K:K.p50, vlq:'95%',kq:'50%'}
+    ];
+  }else{
+    arr=[
+      {key:'Pk1',label:'P_k1 กว้าง',cls:'badge-u',VL:VL.p95,K:K.p95,vlq:'95%',kq:'95%'},
+      {key:'Pk2',label:'P_k2 แคบ',cls:'badge-o',VL:VL.p95,K:K.p5, vlq:'95%',kq:'5%'}
+    ];
+  }
+  arr.forEach(c=>c.stat=curveStats(state.tunnels,c.K,c.VL,state.view.Xh));
+  return arr;
+}
+
+/* ================= READOUT ================= */
+function updateReadout(sc){
+  const ro=document.getElementById('readout');
+  let html='';
+  state.tunnels.forEach((t,i)=>{
+    html+=`<div><span>T${i+1} z₀</span><b>${t.z.toFixed(1)} ม.</b></div>`;
+  });
+  if(state.tunnels.length>=2){
+    const a=state.tunnels[0],b=state.tunnels[1];
+    const dx=Math.abs(a.x-b.x), dz=Math.abs(a.z-b.z);
+    const cc=Math.hypot(a.x-b.x,a.z-b.z);
+    const clear=cc-(a.D/2+b.D/2);
+    html+=`<div><span>Δราบ</span><b>${dx.toFixed(1)}</b></div>
+      <div><span>Δดิ่ง</span><b>${dz.toFixed(1)}</b></div>
+      <div><span>ศก.–ศก.</span><b>${cc.toFixed(1)}</b></div>
+      <div><span>ช่องว่างสุทธิ</span><b style="color:${clear<a.D?'#F0A98B':'#7FD1A6'}">${clear.toFixed(1)} ม.</b></div>`;
+  }
+  ro.innerHTML=html;
+}
+
+/* settlement values under the section: each tunnel + combined (superposition) */
+function updateSectionValues(drive,driveStat){
+  const el=document.getElementById('svValues'); if(!el)return;
+  const cfg=configType();
+  let h=`<span class="svv-label" style="color:#F0C89B">รูปแบบ: ${cfg.th}</span><span class="svv-label">การทรุดตัวสูงสุด (${drive.label}):</span>`;
+  if(state.tunnels.length>1){
+    state.tunnels.forEach((t,j)=>{
+      const sj=tunnelParams(t,drive.K,drive.VL).smax*1000;
+      h+=`<span class="svv" style="color:${T_COLORS[j%4]}">▬ อุโมงค์ T${j+1}: <b>${sj.toFixed(1)} มม.</b></span>`;
+    });
+    h+=`<span class="svv comb">▬ รวม (superposition): <b>${driveStat.smax_mm.toFixed(1)} มม.</b> ที่ y=${driveStat.xmax.toFixed(1)} ม.</span>`;
+  }else{
+    h+=`<span class="svv comb">อุโมงค์เดี่ยว: <b>${driveStat.smax_mm.toFixed(1)} มม.</b></span>`;
+  }
+  el.innerHTML=h;
+}
+
+/* ================= RESULTS TABLE ================= */
+function updateResults(curves){
+  const grp=activeGroup();
+  const gov=governingLayer();
+  document.getElementById('kAuto').innerHTML=
+    state.kGroup==='auto'
+      ?`แกนอุโมงค์อยู่ในชั้น <b>${gov.uscs}</b>${gov.below?' (ต่ำกว่าชั้นล่างสุด → ใช้ชั้นล่างสุด)':''} → กลุ่ม <b>${GRP_TH[grp]}</b> → K₅₀=${KQ[grp].p50}`
+      :`เลือกเอง: ${GRP_TH[grp]} → K₅₀=${KQ[grp].p50}`;
+  document.getElementById('stageLabel').textContent=state.stage===1?'Stage 1':'Stage 2';
+
+  let head=`<thead><tr><th>ค่าทำนาย</th><th class="num">V<sub>L</sub></th><th class="num">K</th><th class="num">s<sub>max</sub></th><th class="num">i (T1)</th><th class="num">ลาดชันสูงสุด</th></tr></thead><tbody>`;
+  let rows='';
+  curves.forEach(c=>{
+    const iT1=(c.K*state.tunnels[0].z).toFixed(2);
+    const slope=c.stat.slope>1e-6?('1:'+Math.round(1/c.stat.slope)):'—';
+    rows+=`<tr>
+      <td><b class="${c.cls}">${c.label}</b><br><span class="mini">VL ${c.vlq} · K ${c.kq}</span></td>
+      <td class="kcell">${(c.VL*100).toFixed(2)}%</td>
+      <td class="kcell">${c.K.toFixed(2)}</td>
+      <td class="kcell"><b class="${c.cls}">${c.stat.smax_mm.toFixed(1)}</b> มม.</td>
+      <td class="kcell">${iT1} ม.</td>
+      <td class="kcell">${slope}</td>
+    </tr>`;
+  });
+  document.getElementById('resTbl').innerHTML=head+rows+`</tbody>`;
+
+  const dq=state.shield==='slurry'?'Slurry':'EPB';
+  document.getElementById('engineNote').innerHTML=
+    `ดิน K: <b>${GRP_TH[grp]}</b> · วิธีขุด: <b>${dq}</b> · s<sub>max</sub> = ค่าสูงสุดของเส้นโค้งรวม (superposition) · ลาดชัน = ความชันสูงสุดของผิวดินที่ทรุด`;
+}
+
+/* ================= HAND CALCULATION ================= */
+function fmtN(n,dp){ if(!isFinite(n))return '—'; return n.toLocaleString('en-US',{minimumFractionDigits:dp,maximumFractionDigits:dp}); }
+function renderHandCalc(curves){
+  const el=document.getElementById('handcalc'); if(!el)return;
+  const VL=getVL(), K=getK(), grp=activeGroup(), gov=governingLayer();
+  const shieldName=state.shield==='slurry'?'Slurry':'EPB';
+  let h='';
+
+  // 1 — inputs
+  h+=`<div class="hc-block"><div class="hc-h">1 · ข้อมูลนำเข้า</div>`;
+  h+=`<div class="hc-eq">วิธีขุด = <b>${shieldName}</b> → V<sub>L</sub> [P5/P50/P95] = <span class="hc-r">${(VL.p5*100).toFixed(2)} / ${(VL.p50*100).toFixed(2)} / ${(VL.p95*100).toFixed(2)}%</span></div>`;
+  h+=`<div class="hc-eq">ชั้นดินที่แกนอุโมงค์ = <b>${gov.uscs}</b>${gov.below?' (ใต้ชั้นล่างสุด)':''} → กลุ่ม <b>${GRP_TH[grp]}</b> → K [P5/P50/P95] = <span class="hc-r">${K.p5} / ${K.p50} / ${K.p95}</span></div>`;
+  h+=`<div class="hc-eq">ระดับน้ำใต้ดิน z<sub>w</sub> = <b>${state.gwl.toFixed(1)} ม.</b> · √(2π) ≈ 2.5066</div>`;
+  h+=`</div>`;
+
+  // 2 — geometry
+  h+=`<div class="hc-block"><div class="hc-h">2 · เรขาคณิต — พื้นที่หน้าตัดขุดเจาะ Aₜ = πD²/4</div>`;
+  state.tunnels.forEach((t,j)=>{
+    const At=Math.PI*t.D*t.D/4, lin=(t.lin==null?0.3:t.lin);
+    h+=`<div class="hc-eq">T${j+1}: A<sub>t</sub> = π·(${t.D})²/4 = <span class="hc-r">${fmtN(At,2)} ม²</span> <span class="sub">· z₀=${t.z} ม. · lining t=${lin} ม. (Ø ภายใน ${fmtN(Math.max(0,t.D-2*lin),2)} ม.)</span></div>`;
+  });
+  h+=`<div class="hc-note">A<sub>t</sub> ใช้เส้นผ่าศูนย์กลางขุดเจาะ (bore) — ความหนา lining ไม่เข้าสมการการทรุดตัวเชิงประจักษ์ เป็นข้อมูลบริบทเท่านั้น</div>`;
+  h+=`</div>`;
+
+  // 3 — per prediction curve
+  curves.forEach(c=>{
+    h+=`<div class="hc-block"><div class="hc-h">3 · ${c.label} <span class="hc-tag">V_L ${c.vlq} · K ${c.kq}</span></div>`;
+    state.tunnels.forEach((t,j)=>{
+      const p=tunnelParams(t,c.K,c.VL);
+      h+=`<div class="hc-eq">T${j+1}: i = K·z₀ = ${c.K}×${t.z} = <span class="hc-r">${fmtN(p.i,2)} ม.</span></div>`;
+      h+=`<div class="hc-eq" style="padding-left:16px">s<sub>max</sub> = (V<sub>L</sub>·A<sub>t</sub>)/(√(2π)·i) = (${c.VL.toFixed(4)}×${fmtN(p.At,2)})/(2.5066×${fmtN(p.i,2)}) = <span class="hc-r">${fmtN(p.smax*1000,2)} มม.</span></div>`;
+    });
+    if(state.tunnels.length>1){
+      h+=`<div class="hc-eq">รวมด้วย superposition → ยอดหลุมสูงสุด s<sub>max,รวม</sub> = <span class="hc-r">${fmtN(c.stat.smax_mm,2)} มม.</span> <span class="sub">ที่ x=${c.stat.xmax.toFixed(1)} ม.</span></div>`;
+    }
+    const slope=c.stat.slope>1e-6?('1:'+Math.round(1/c.stat.slope)):'—';
+    h+=`<div class="hc-eq">ลาดชันผิวดินสูงสุด ≈ <span class="hc-r">${slope}</span></div>`;
+    h+=`</div>`;
+  });
+
+  // 4 — context: overburden stress
+  const ob=overburden(gov.axis);
+  h+=`<div class="hc-ctx"><div class="hc-h">บริบทเชิงธรณีเทคนิค · หน่วยแรงในแนวดิ่งที่แกนอุโมงค์ (z=${gov.axis.toFixed(1)} ม.)</div>`;
+  h+=`<div class="hc-eq">σ<sub>v0</sub> = Σ(γ·h) = <span class="hc-r">${fmtN(ob.sv,1)} kPa</span> · u = γ<sub>w</sub>·(z−z<sub>w</sub>) = <span class="hc-r">${fmtN(ob.u,1)} kPa</span> · σ′<sub>v0</sub> = <span class="hc-r">${fmtN(ob.sve,1)} kPa</span></div>`;
+  h+=`<div class="hc-note">คำนวณจาก γ ของแต่ละชั้น + ระดับน้ำ เพื่อบอกบริบทหน่วยแรง — ไม่เข้าสมการ s<sub>max</sub> ของวิธีเชิงประจักษ์ (Gaussian/Peck)</div>`;
+  h+=`</div>`;
+
+  el.innerHTML=h;
+}
+
+/* ================= PROFILE CHART ================= */
+function drawProfile(curves){
+  const W=1000,H=300,mL=54,mR=20,mT=20,mB=40;
+  const Xh=state.view.Xh;
+  const pw=W-mL-mR, ph=H-mT-mB;
+  const maxS=Math.max(...curves.map(c=>c.stat.smax_mm),1)*1.15;
+  const sx=x=>mL+(x+Xh)/(2*Xh)*pw;
+  const sy=s=>mT+s/maxS*ph;
+  let g='';
+  // grid
+  for(let x=-Xh;x<=Xh;x+=10){g+=`<line x1="${sx(x)}" y1="${mT}" x2="${sx(x)}" y2="${mT+ph}" stroke="#ffffff10"/><text x="${sx(x)}" y="${H-14}" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#7E93A8">${x}</text>`;}
+  const ystep=maxS<=10?2:(maxS<=30?5:10);
+  for(let s=0;s<=maxS;s+=ystep){g+=`<line x1="${mL}" y1="${sy(s)}" x2="${mL+pw}" y2="${sy(s)}" stroke="#ffffff10"/><text x="${mL-8}" y="${sy(s)+3}" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="#7E93A8">${s}</text>`;}
+  g+=`<text x="${mL-40}" y="${mT+ph/2}" transform="rotate(-90 ${mL-40} ${mT+ph/2})" text-anchor="middle" font-family="IBM Plex Sans Thai" font-size="11" fill="#9FB2C6">การทรุดตัว (มม.)</text>`;
+  g+=`<text x="${mL+pw/2}" y="${H-2}" text-anchor="middle" font-family="IBM Plex Sans Thai" font-size="11" fill="#9FB2C6">ระยะราบจากศูนย์กลาง (ม.)</text>`;
+  // curves
+  const colMap={'badge-u':'#7FD1A6','badge-m':'#E4A11B','badge-o':'#F0A98B'};
+  curves.forEach(c=>{
+    let p='';
+    for(let k=0;k<=200;k++){const x=-Xh+2*Xh*k/200;const s=settlement(x,state.tunnels,c.K,c.VL)*1000;p+=(k?'L':'M')+sx(x).toFixed(1)+','+sy(s).toFixed(1)+' ';}
+    g+=`<path d="${p}" fill="none" stroke="${colMap[c.cls]}" stroke-width="2.5" opacity="0.95"/>`;
+    g+=`<text x="${sx(c.stat.xmax)}" y="${sy(c.stat.smax_mm)+14}" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="${colMap[c.cls]}">${c.key} ${c.stat.smax_mm.toFixed(1)}</text>`;
+  });
+  document.getElementById('svgProfile').innerHTML=g;
+}
+
+/* ================= SUPERPOSITION DECOMPOSITION ================= */
+function contrib(x,t,K,VL){ const {i,smax}=tunnelParams(t,K,VL); const d=x-t.x; return smax*Math.exp(-(d*d)/(2*i*i)); }
+/* รูปแบบการวางอุโมงค์ตามเรขาคณิตจริง (สอดคล้องกับ preset ด้านบน) */
+function configType(){
+  const n=state.tunnels.length;
+  if(n===1) return {key:'single', th:'อุโมงค์เดี่ยว', en:'single tunnel'};
+  if(n===2){
+    const a=state.tunnels[0], b=state.tunnels[1];
+    const dx=Math.abs(a.x-b.x), dz=Math.abs(a.z-b.z);
+    if(dx<0.6 && dz>=0.6) return {key:'stacked', th:'อุโมงค์คู่ซ้อนแนวดิ่ง', en:'stacked twin'};
+    if(dz<0.6 && dx>=0.6) return {key:'parallel', th:'อุโมงค์คู่ขนาน', en:'side-by-side twin'};
+    return {key:'offset', th:'อุโมงค์คู่แบบเยื้อง', en:'offset twin'};
+  }
+  return {key:'multi', th:`อุโมงค์ ${n} ท่อ`, en:`${n} tunnels`};
+}
+// เฉดสีเข้มสำหรับ "ตัวอักษร" บนพื้นขาว (เป็นสีเดียวกับเส้น แต่เข้มพอให้อ่านชัด)
+const T_INK=['#D61F3C','#1466C6','#8A3FD6','#0E9E72'];
+const COMB_INK='#B77A08', COMB_EDGE='#C8880F';
+function drawSuperposition(curves){
+  const host=document.getElementById('svgSuper'); if(!host)return;
+  const legend=document.getElementById('superLegend');
+  const noteEl=document.getElementById('superNote');
+  const drive=curves.find(c=>c.key===state.driveCurve)||curves.find(c=>c.key==='Pm')||curves[Math.floor(curves.length/2)]||curves[0];
+  const K=drive.K, VL=drive.VL, Xh=state.view.Xh;
+  const multi=state.tunnels.length>1;
+  const W=1000,H=480,mL=60,mR=24,mB=42;
+  const surfaceY=64, botY=H-mB, plotW=W-mL-mR;
+  const N=240, xs=[]; for(let k=0;k<=N;k++) xs.push(-Xh+2*Xh*k/N);
+  const comb=xs.map(x=>settlement(x,state.tunnels,K,VL)*1000);
+  const indiv=multi?state.tunnels.map(t=>xs.map(x=>contrib(x,t,K,VL)*1000)):[];
+  const combPeak=Math.max(...comb), xmax=xs[comb.indexOf(combPeak)];
+  const maxS=Math.max(0.5,...comb,...indiv.flat());
+  // vertical scales
+  const Zshow=Math.max(8, Math.min(state.view.Zmax, Math.max(...state.tunnels.map(t=>t.z+t.D/2))+3));
+  const depthY=z=>surfaceY + z/Zshow*(botY-surfaceY);
+  const EX=Math.min(120/Math.max(maxS,0.5), 22);      // px ต่อ มม. (ขยายแนวดิ่งเฉพาะการทรุดตัว)
+  const troughY=s=>surfaceY + s*EX;                    // s เป็น มม.
+  const sx=x=>mL+(x+Xh)/(2*Xh)*plotW;
+  let g='';
+  // clean white plot area + subsurface tint
+  g+=`<rect x="0" y="0" width="${W}" height="${H}" fill="#FFFFFF"/>`;
+  g+=`<rect x="${mL}" y="${surfaceY}" width="${plotW}" height="${botY-surfaceY}" fill="#F5F8FB"/>`;
+  // depth ticks (left)
+  const dstep=Zshow<=12?2:5;
+  for(let z=0;z<=Zshow+0.01;z+=dstep){
+    const y=depthY(z);
+    g+=`<line x1="${mL-5}" y1="${y}" x2="${W-mR}" y2="${y}" stroke="#E4EAF1" stroke-width="1"/>`;
+    g+=`<text x="${mL-8}" y="${y+4}" text-anchor="end" font-family="IBM Plex Mono" font-size="10.5" fill="#7A8CA0">${z}</text>`;
+  }
+  g+=`<text x="15" y="${(surfaceY+botY)/2}" text-anchor="middle" font-family="IBM Plex Sans Thai" font-size="12" fill="#5A6B7C" transform="rotate(-90 15 ${(surfaceY+botY)/2})">ความลึก (ม.)</text>`;
+  // surface line
+  g+=`<line x1="${mL}" y1="${surfaceY}" x2="${W-mR}" y2="${surfaceY}" stroke="#33475B" stroke-width="2"/>`;
+  g+=`<text x="${W-mR}" y="${surfaceY-7}" text-anchor="end" font-family="IBM Plex Sans Thai" font-size="11" fill="#5A6B7C">ผิวดิน · ขยายการทรุดตัว ×${EX.toFixed(1)}</text>`;
+  // x ticks (distance)
+  for(let xv=-Xh;xv<=Xh+0.01;xv+=10){ const x=sx(xv);
+    g+=`<line x1="${x}" y1="${botY}" x2="${x}" y2="${botY+5}" stroke="#9FB0C0"/>`;
+    g+=`<text x="${x}" y="${botY+19}" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="#7A8CA0">${xv}</text>`;
+  }
+  g+=`<text x="${mL+plotW/2}" y="${H-5}" text-anchor="middle" font-family="IBM Plex Sans Thai" font-size="12" fill="#5A6B7C">ระยะตามขวางจากจุดกึ่งกลาง y (ม.)</text>`;
+
+  // vertical connectors: tunnel -> surface (same colour)
+  state.tunnels.forEach((t,j)=>{ const cx=sx(t.x);
+    g+=`<line x1="${cx}" y1="${surfaceY}" x2="${cx}" y2="${depthY(t.z)}" stroke="${T_COLORS[j%4]}" stroke-width="1.4" stroke-dasharray="3 4" opacity="0.75"/>`;
+  });
+
+  // individual troughs (dashed, tunnel colour)
+  indiv.forEach((arr,j)=>{ let p=''; arr.forEach((s,k)=>p+=(k?'L':'M')+sx(xs[k]).toFixed(1)+','+troughY(s).toFixed(1)+' ');
+    g+=`<path d="${p}" fill="none" stroke="${T_COLORS[j%4]}" stroke-width="2.4" stroke-dasharray="8 5" stroke-linecap="round"/>`;
+  });
+  // combined trough (gold, with darker edge for white bg)
+  let pc=''; comb.forEach((s,k)=>pc+=(k?'L':'M')+sx(xs[k]).toFixed(1)+','+troughY(s).toFixed(1)+' ');
+  g+=`<path d="${pc}" fill="none" stroke="${COMB_EDGE}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  g+=`<path d="${pc}" fill="none" stroke="${COMB_COLOR}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+  // per-tunnel peak dot + value (dark ink text)
+  if(multi){
+    state.tunnels.forEach((t,j)=>{ const sj=tunnelParams(t,K,VL).smax*1000, px=sx(t.x), py=troughY(sj);
+      g+=`<circle cx="${px}" cy="${py}" r="3.6" fill="${T_COLORS[j%4]}" stroke="#fff" stroke-width="1"/>`;
+      g+=`<text x="${px}" y="${py+15}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" font-weight="700" fill="${T_INK[j%4]}">T${j+1} = ${sj.toFixed(1)} มม.</text>`;
+    });
+  }
+  // combined peak dot + value
+  g+=`<circle cx="${sx(xmax)}" cy="${troughY(combPeak)}" r="4.5" fill="${COMB_COLOR}" stroke="${COMB_EDGE}" stroke-width="1.4"/>`;
+  g+=`<text x="${sx(xmax)}" y="${troughY(combPeak)+(multi?-9:16)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="12.5" font-weight="700" fill="${COMB_INK}">${multi?'รวม':'s_max'} = ${combPeak.toFixed(1)} มม.</text>`;
+
+  // tunnel circles at true depth (same colours as top figure)
+  state.tunnels.forEach((t,j)=>{
+    const cx=sx(t.x), cy=depthY(t.z), r=(t.D/2)/Zshow*(botY-surfaceY);
+    g+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${T_COLORS[j%4]}" fill-opacity="0.16" stroke="${T_COLORS[j%4]}" stroke-width="3"/>`;
+    g+=`<circle cx="${cx}" cy="${cy}" r="${Math.max(2,r*0.12)}" fill="${T_INK[j%4]}"/>`;
+    g+=`<line x1="${cx-r*0.5}" y1="${cy}" x2="${cx+r*0.5}" y2="${cy}" stroke="${T_INK[j%4]}" stroke-width="1"/>`;
+    g+=`<text x="${cx}" y="${cy+r+16}" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="12" fill="${T_INK[j%4]}">T${j+1} · Ø${t.D} · z${t.z}</text>`;
+  });
+
+  host.innerHTML=g;
+
+  // heading + sub-description reflect the ACTUAL layout (single / parallel / stacked / offset)
+  const cfg=configType();
+  const titleEl=document.getElementById('superTitle'), subEl=document.getElementById('superSub');
+  if(titleEl) titleEl.innerHTML = multi
+    ? `การซ้อนทับผล (Superposition) — <span style="color:#B77A08">${cfg.th}</span>`
+    : `การทรุดตัวที่ผิวดิน — <span style="color:#B77A08">${cfg.th}</span>`;
+  if(subEl) subEl.innerHTML = multi
+    ? `เส้นประ = หลุมทรุดของแต่ละอุโมงค์แยกกัน · เส้นทึบสีเหลือง = ผลรวมจากการซ้อนทับ (ใช้ค่าทำนายกลาง)`
+    : `เส้นทึบสีเหลือง = หลุมทรุดที่ผิวดินของอุโมงค์เดี่ยว (ใช้ค่าทำนายกลาง) — การซ้อนทับใช้เมื่อมีอุโมงค์ตั้งแต่ 2 ท่อ`;
+
+  // HTML legend
+  let lg='';
+  if(multi) state.tunnels.forEach((t,j)=>{ lg+=`<span class="lg"><span class="sw" style="border-top-color:${T_COLORS[j%4]};border-top-style:dashed"></span>T${j+1} (แยก)</span>`; });
+  lg+=`<span class="lg"><span class="sw" style="border-top-color:${COMB_COLOR}"></span>${multi?'รวม (Superposition)':'การทรุดตัวที่ผิวดิน'}</span>`;
+  lg+=`<span class="lg"><span class="sw-dot"></span>ตำแหน่งอุโมงค์</span>`;
+  legend.innerHTML=lg;
+
+  // note
+  if(multi){
+    noteEl.innerHTML=`รูปแบบ: <b>${cfg.th}</b> · ค่าทำนายที่ใช้: <b>${drive.label}</b> · ยอดหลุมรวมสูงสุด <b>${combPeak.toFixed(1)} มม.</b> ที่ y=${xmax.toFixed(1)} ม. — เกิดจากการบวกหลุมทรุดของ ${state.tunnels.length} อุโมงค์ตามหลักการซ้อนทับ (เมื่ออุโมงค์อยู่ใกล้กัน หลุมรวมจะลึกกว่าหลุมเดี่ยว)`;
+  }else{
+    noteEl.innerHTML=`รูปแบบ: <b>อุโมงค์เดี่ยว</b> — มีอุโมงค์เดียวจึงไม่มีการซ้อนทับ เส้นรวมเท่ากับหลุมทรุดของอุโมงค์นั้น · เลือก preset “คู่ขนาน / ซ้อนแนวดิ่ง / เยื้อง” ด้านบนเพื่อดูการแยกเส้นและการซ้อนทับ`;
+  }
+}
+
+/* ================= VOLUME LOSS BY NUMERICAL INTEGRATION ================= */
+function drawVolumeIntegration(curves){
+  const host=document.getElementById('svgVolume'); if(!host)return;
+  const calcEl=document.getElementById('volumeCalc');
+  const drive=curves.find(c=>c.key===state.driveCurve)||curves.find(c=>c.key==='Pm')||curves[0];
+  const K=drive.K, VL=drive.VL, Xh=state.view.Xh, single=state.tunnels.length===1;
+  const nStrip=12, nPt=nStrip+1, a=-Xh, b=Xh, dx=(b-a)/nStrip;
+  const pts=[]; for(let k=0;k<nPt;k++){const x=a+k*dx; pts.push({x, s:settlement(x,state.tunnels,K,VL)});} // s in m
+  let SA=0; for(let k=0;k<nPt;k++){ SA+=((k===0||k===nPt-1)?0.5:1)*pts[k].s; } SA*=dx; // m^2
+  const SDtot=state.tunnels.reduce((acc,t)=>acc+Math.PI*t.D*t.D/4,0);
+  const VLback=SA/SDtot;
+  const smax_mm=drive.stat.smax_mm, xmax=drive.stat.xmax;
+
+  const W=1000,H=430,mL=58,mR=26,mB=54,surfaceY=48;
+  const botY=H-mB, plotW=W-mL-mR;
+  const EX=Math.min((botY-surfaceY-46)/Math.max(smax_mm,0.5), 34);
+  const sx=x=>mL+(x-a)/(b-a)*plotW;
+  const yOf=s_m=>surfaceY + s_m*1000*EX;
+  const N=220, cx=[]; for(let k=0;k<=N;k++){const x=a+(b-a)*k/N; cx.push({x, y:yOf(settlement(x,state.tunnels,K,VL))});}
+
+  let g='';
+  g+=`<rect x="0" y="0" width="${W}" height="${H}" fill="#FFFFFF"/>`;
+
+  // shaded settlement-trough area S_A (under curve)
+  let area='M'+sx(a).toFixed(1)+','+surfaceY+' ';
+  cx.forEach(p=>area+='L'+sx(p.x).toFixed(1)+','+p.y.toFixed(1)+' ');
+  area+='L'+sx(b).toFixed(1)+','+surfaceY+' Z';
+  g+=`<path d="${area}" fill="#EAF0F6"/>`;
+
+  // center line (tunnel centreline)
+  const centerX = single ? state.tunnels[0].x : 0, cxL=sx(centerX);
+  g+=`<line x1="${cxL.toFixed(1)}" y1="${surfaceY-14}" x2="${cxL.toFixed(1)}" y2="${botY}" stroke="#5A6B7C" stroke-width="1.4" stroke-dasharray="6 5"/>`;
+  g+=`<text x="${cxL.toFixed(1)}" y="15" text-anchor="middle" font-family="IBM Plex Sans Thai" font-size="13" font-weight="600" fill="#33475B">แนวศูนย์กลาง (Center line)</text>`;
+
+  // ground surface (top reference line, S = 0)
+  g+=`<line x1="${mL}" y1="${surfaceY}" x2="${W-mR}" y2="${surfaceY}" stroke="#33475B" stroke-width="2"/>`;
+  // bottom distance axis (x) with a label at EVERY discretisation point
+  g+=`<line x1="${mL}" y1="${botY}" x2="${W-mR+6}" y2="${botY}" stroke="#33475B" stroke-width="1.6"/>`;
+  g+=`<path d="M${W-mR+6},${botY} l-9,-4 l0,8 z" fill="#33475B"/>`;
+  g+=`<text x="${W-mR+2}" y="${botY-8}" text-anchor="end" font-family="IBM Plex Sans Thai" font-size="12" fill="#5A6B7C">x</text>`;
+  pts.forEach((p,k)=>{ const X=sx(p.x);
+    g+=`<line x1="${X.toFixed(1)}" y1="${botY-4}" x2="${X.toFixed(1)}" y2="${botY+4}" stroke="#7C90A6"/>`;
+    g+=`<text x="${X.toFixed(1)}" y="${botY+18}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#44586C">${p.x.toFixed(1)}</text>`;
+  });
+  g+=`<text x="${mL+plotW/2}" y="${H-5}" text-anchor="middle" font-family="IBM Plex Sans Thai" font-size="12.5" fill="#5A6B7C">ระยะตามขวางจากจุดกึ่งกลาง (ม.)</text>`;
+
+  // settlement-trough curve
+  let cp=''; cx.forEach((p,k)=>cp+=(k?'L':'M')+sx(p.x).toFixed(1)+','+p.y.toFixed(1)+' ');
+  g+=`<path d="${cp}" fill="none" stroke="${COMB_INK}" stroke-width="2.8" stroke-linejoin="round"/>`;
+
+  // discretisation points: big translucent circles with the settlement value (มม.) INSIDE each circle
+  pts.forEach((p,k)=>{ const X=sx(p.x),Y=yOf(p.s);
+    g+=`<circle cx="${X.toFixed(1)}" cy="${Y.toFixed(1)}" r="14" fill="${COMB_COLOR}" fill-opacity="0.34" stroke="${COMB_INK}" stroke-width="1.8"/>`;
+    g+=`<text x="${X.toFixed(1)}" y="${(Y+3.7).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" font-weight="700" fill="#12233A">${(p.s*1000).toFixed(1)}</text>`;
+  });
+  // a & b endpoints
+  g+=`<text x="${sx(a).toFixed(1)}" y="${surfaceY-11}" text-anchor="middle" font-family="IBM Plex Mono" font-size="15" font-weight="700" fill="#22405C">a</text>`;
+  g+=`<text x="${sx(b).toFixed(1)}" y="${surfaceY-11}" text-anchor="middle" font-family="IBM Plex Mono" font-size="15" font-weight="700" fill="#22405C">b</text>`;
+
+  // S_max marker (callout above the peak to avoid the per-point value below)
+  const XM=sx(xmax), YM=yOf(smax_mm/1000);
+  g+=`<circle cx="${XM.toFixed(1)}" cy="${YM.toFixed(1)}" r="15.5" fill="none" stroke="${COMB_EDGE}" stroke-width="2.2"/>`;
+  g+=`<text x="${XM.toFixed(1)}" y="${(YM-22).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Sans Thai" font-size="13.5" font-weight="700" fill="${COMB_INK}">S_max = ${smax_mm.toFixed(1)} มม.</text>`;
+
+  // inflection points + trough width (single tunnel only, where i is well-defined)
+  if(single){
+    const t=state.tunnels[0], iVal=K*t.z, sInf=settlement(t.x-iVal,state.tunnels,K,VL);
+    [-1,1].forEach(sgn=>{ const xi=t.x+sgn*iVal; const X=sx(xi),Y=yOf(sInf);
+      g+=`<circle cx="${X.toFixed(1)}" cy="${Y.toFixed(1)}" r="4.6" fill="#fff" stroke="#C0392B" stroke-width="2.4"/>`;
+    });
+    g+=`<text x="${sx(t.x+iVal).toFixed(1)}" y="${(yOf(sInf)-11).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Sans Thai" font-size="12" font-weight="600" fill="#C0392B">Point of inflection (i)</text>`;
+    // width arrow between ±i
+    const wy=surfaceY+ (botY-surfaceY)*0.14;
+    g+=`<line x1="${sx(t.x-iVal).toFixed(1)}" y1="${wy}" x2="${sx(t.x+iVal).toFixed(1)}" y2="${wy}" stroke="#5A6B7C" stroke-width="1.4"/>`;
+    g+=`<path d="M${sx(t.x-iVal).toFixed(1)},${wy} l9,-4 l0,8 z" fill="#5A6B7C"/><path d="M${sx(t.x+iVal).toFixed(1)},${wy} l-9,-4 l0,8 z" fill="#5A6B7C"/>`;
+    g+=`<text x="${sx(t.x).toFixed(1)}" y="${wy-7}" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="#44586C">2i = ${(2*iVal).toFixed(1)} ม.</text>`;
+  }
+
+  host.innerHTML=g;
+
+  // ---- calculation ----
+  const dq=state.shield==='slurry'?'Slurry':'EPB';
+  let ptStr=pts.map((p,k)=>`S${k}=${(p.s*1000).toFixed(2)}`).join(' · ');
+  let h='';
+  h+=`<div class="hc-block"><div class="hc-h">ขั้นตอนการอินทิเกรตเชิงตัวเลข (ค่าทำนาย ${drive.label})</div>`;
+  h+=`<div class="hc-eq">ช่วง a=${a.toFixed(0)} ถึง b=${b.toFixed(0)} ม. · จำนวนจุด n=${nPt} · Δx = (b−a)/(n−1) = <span class="hc-r">${dx.toFixed(2)} ม.</span></div>`;
+  h+=`<div class="hc-eq" style="font-size:11px">ค่าการทรุดตัวที่แต่ละจุด S<sub>k</sub> (มม.): <span class="sub">${ptStr}</span></div>`;
+  h+=`</div>`;
+  h+=`<div class="hc-block"><div class="hc-h">Settlement trough area S<sub>A</sub> (trapezoidal rule)</div>`;
+  h+=`<div class="hc-eq">S<sub>A</sub> = Δx · [ ½S₀ + S₁ + … + S<sub>n−1</sub> + ½S<sub>n</sub> ] (แปลง มม.→ม.)</div>`;
+  h+=`<div class="hc-eq">S<sub>A</sub> = <span class="hc-r">${SA.toFixed(4)} ม²</span> <span class="sub">(= area under the settlement trough)</span></div>`;
+  h+=`</div>`;
+  h+=`<div class="hc-block"><div class="hc-h">Excavation area S<sub>D</sub> &amp; volume loss V<sub>L</sub></div>`;
+  state.tunnels.forEach((t,j)=>{ h+=`<div class="hc-eq">S<sub>D,T${j+1}</sub> = πD²/4 = π·(${t.D})²/4 = <span class="hc-r">${(Math.PI*t.D*t.D/4).toFixed(2)} ม²</span></div>`; });
+  h+=`<div class="hc-eq">S<sub>D,total</sub> = <span class="hc-r">${SDtot.toFixed(2)} ม²</span> · V<sub>L</sub> = S<sub>A</sub>/S<sub>D</sub> = ${SA.toFixed(4)}/${SDtot.toFixed(2)} = <span class="hc-r">${(VLback*100).toFixed(3)}%</span></div>`;
+  h+=`<div class="hc-note">ค่าที่ป้อนเข้าแบบจำลอง (${dq}, ${drive.label}) V<sub>L</sub> = <b>${(VL*100).toFixed(2)}%</b> — ผลย้อนกลับจากการอินทิเกรตได้ <b>${(VLback*100).toFixed(3)}%</b> ${Math.abs(VLback-VL)/VL<0.02?'≈ ตรงกัน ✓ (ปิด loop)':'(ต่างเล็กน้อยจากการตัดปลาย settlement trough / จำนวนจุด)'}</div>`;
+  if(!single) h+=`<div class="hc-note">รูปแบบ: <b>${configType().th}</b> — S<sub>A</sub> คือ area ของ settlement trough รวม และ S<sub>D</sub> คือผลรวม excavation area ทุกท่อ · V<sub>L</sub> ที่ได้เป็นค่าเฉลี่ยรวมของระบบ</div>`;
+  h+=`</div>`;
+  calcEl.innerHTML=h;
+}
+
+/* ================= DRAG ================= */
+let dragState=null;
+function svgPoint(evt){
+  const svg=document.getElementById('svgSection');
+  const pt=svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+function attachDrag(){
+  const svg=document.getElementById('svgSection');
+  svg.querySelectorAll('.tunnel').forEach(g=>{
+    g.addEventListener('pointerdown',e=>{
+      dragState={type:'tunnel',i:+g.dataset.i}; svg.classList.add('drag');
+      svg.setPointerCapture(e.pointerId); e.preventDefault();
+    });
+  });
+  const gw=svg.querySelector('#gwlHandle');
+  if(gw) gw.addEventListener('pointerdown',e=>{dragState={type:'gwl'};svg.setPointerCapture(e.pointerId);e.preventDefault();});
+}
+function onMove(e){
+  if(!dragState)return;
+  const sc=scales(); const p=svgPoint(e);
+  if(dragState.type==='tunnel'){
+    const t=state.tunnels[dragState.i];
+    t.x=Math.round(sc.ix(p.x)*2)/2;
+    t.z=Math.round(sc.iz(p.y)*2)/2;
+    clampTunnel(t);
+    draw();
+    showLive(e,t,dragState.i);
+    // refresh tunnel input fields
+    renderTunnels();
+  }else if(dragState.type==='gwl'){
+    state.gwl=Math.max(0,Math.min(sc.Zmax,Math.round(sc.iz(p.y)*2)/2));
+    document.getElementById('gwl').value=state.gwl;
+    document.getElementById('gwlV').textContent=state.gwl.toFixed(1)+' ม.';
+    draw();
+  }
+}
+function onUp(e){
+  if(dragState){dragState=null;document.getElementById('svgSection').classList.remove('drag');hideLive();}
+}
+function showLive(e,t,i){
+  const lb=document.getElementById('livebox');
+  const rect=document.getElementById('diagram').getBoundingClientRect();
+  let txt=`T${i+1}  x=${t.x.toFixed(1)}  z=${t.z.toFixed(1)}  Ø${t.D}`;
+  if(state.tunnels.length>=2){
+    const o=state.tunnels[i===0?1:0];
+    const cc=Math.hypot(t.x-o.x,t.z-o.z);
+    txt+=`\nระยะศก.–ศก. = ${cc.toFixed(1)} ม.`;
+  }
+  lb.textContent=txt; lb.style.whiteSpace='pre';
+  let x=e.clientX-rect.left+14, y=e.clientY-rect.top-10;
+  x=Math.min(x,rect.width-150);
+  lb.style.left=x+'px'; lb.style.top=y+'px'; lb.style.opacity='1';
+}
+function hideLive(){document.getElementById('livebox').style.opacity='0';}
+
+/* ================= BIND CONTROLS ================= */
+document.getElementById('addTunnel').addEventListener('click',()=>{
+  if(state.tunnels.length>=4)return;
+  state.tunnels.push({x:state.tunnels.length*6-6,z:16,D:6.7,lin:0.30});
+  state.tunnels.forEach(clampTunnel); renderTunnels(); draw();
+});
+document.getElementById('addSoil').addEventListener('click',()=>{
+  state.soils.push({uscs:'SP',th:6,gamma:18}); renderSoils(); draw();
+});
+document.getElementById('btnRefresh').addEventListener('click',()=>{
+  draw();
+  const hc=document.getElementById('handcalc');
+  if(hc){ hc.classList.remove('flash'); void hc.offsetWidth; hc.classList.add('flash'); }
+});
+/* (ปุ่มบันทึก PDF ถูกนำออกแล้ว — หากต้องการพิมพ์ สามารถใช้ Ctrl/Cmd+P ของเบราว์เซอร์ ซึ่งจัดหน้า A4 ให้แล้วผ่าน @media print) */
+document.querySelectorAll('#presets .preset').forEach(b=>b.addEventListener('click',()=>applyPreset(b.dataset.p)));
+document.querySelectorAll('#shieldSeg button').forEach(b=>b.addEventListener('click',()=>{
+  state.shield=b.dataset.s;
+  document.querySelectorAll('#shieldSeg button').forEach(x=>x.classList.toggle('on',x===b));
+  draw();
+}));
+document.querySelectorAll('#stageSeg button').forEach(b=>b.addEventListener('click',()=>{
+  state.stage=+b.dataset.st;
+  document.querySelectorAll('#stageSeg button').forEach(x=>x.classList.toggle('on',x===b));
+  state.driveCurve=state.stage===1?'Pm':'Pk1';
+  draw();
+}));
+document.getElementById('kGroup').addEventListener('change',e=>{state.kGroup=e.target.value;draw();});
+const gwl=document.getElementById('gwl');
+gwl.value=state.gwl;
+gwl.addEventListener('input',e=>{state.gwl=parseFloat(e.target.value);document.getElementById('gwlV').textContent=state.gwl.toFixed(1)+' ม.';draw();});
+document.getElementById('gwlV').textContent=state.gwl.toFixed(1)+' ม.';
+
+const svgEl=document.getElementById('svgSection');
+svgEl.addEventListener('pointermove',onMove);
+svgEl.addEventListener('pointerup',onUp);
+svgEl.addEventListener('pointercancel',onUp);
+svgEl.addEventListener('pointerleave',e=>{if(dragState&&dragState.type==='tunnel')hideLive();});
+
+/* ================= HERO FIGURE ================= */
+function heroFig(){
+  const W=1200,H=300,gl=120;
+  let s='';
+  s+=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice">`;
+  s+=`<rect x="0" y="${gl}" width="${W}" height="${H-gl}" fill="#1A2E48"/>`;
+  // strata bands
+  const bands=[['#24405f',40],['#2b4a6e',60],['#1f3a58',80]];
+  let yy=gl; bands.forEach(([c,h])=>{s+=`<rect x="0" y="${yy}" width="${W}" height="${h}" fill="${c}" opacity="0.6"/>`;yy+=h;});
+  // ground line
+  s+=`<line x1="0" y1="${gl}" x2="${W}" y2="${gl}" stroke="#7f9bbb" stroke-width="1.5"/>`;
+  // trough (animated via path length)
+  const smax=46,i=150,cx=W/2;
+  let p='M0,'+gl+' ';
+  for(let x=0;x<=W;x+=8){const s2=smax*Math.exp(-((x-cx)**2)/(2*i*i));p+='L'+x+','+(gl+s2)+' ';}
+  s+=`<path id="hp" d="${p}" fill="none" stroke="#E4A11B" stroke-width="3"/>`;
+  let fp=p+`L${W},${gl} Z`;
+  s+=`<path d="${fp}" fill="#E4A11B" opacity="0.14"/>`;
+  // tunnel
+  s+=`<circle cx="${cx}" cy="${gl+120}" r="46" fill="#E4A11B" fill-opacity="0.14" stroke="#E4A11B" stroke-width="3"/>`;
+  s+=`<circle cx="${cx}" cy="${gl+120}" r="5" fill="#E4A11B"/>`;
+  s+=`<line x1="${cx}" y1="${gl}" x2="${cx}" y2="${gl+120}" stroke="#E4A11B" stroke-dasharray="3 5" opacity="0.6"/>`;
+  s+=`<text x="${cx+56}" y="${gl+124}" font-family="IBM Plex Mono" font-size="14" fill="#9FB2C6">z₀</text>`;
+  s+=`</svg>`;
+  const el=document.getElementById('heroFig'); el.innerHTML=s;
+  const path=document.getElementById('hp');
+  try{
+    if(path && window.matchMedia && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && path.getTotalLength && path.animate){
+      const L=path.getTotalLength(); path.style.strokeDasharray=L; path.style.strokeDashoffset=L;
+      path.animate([{strokeDashoffset:L},{strokeDashoffset:0}],{duration:1600,easing:'ease-out',fill:'forwards'});
+    }
+  }catch(_){/* animation is decorative; ignore */}
+}
+
+/* ================= REVEAL ================= */
+try{
+  if('IntersectionObserver' in window){
+    const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.15});
+    document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+  }else{
+    document.querySelectorAll('.reveal').forEach(el=>el.classList.add('in'));
+  }
+}catch(_){ document.querySelectorAll('.reveal').forEach(el=>el.classList.add('in')); }
+
+/* ================= INIT ================= */
+function showAllReveals(){try{document.querySelectorAll('.reveal').forEach(el=>el.classList.add('in'));}catch(_){}}
+function renderMath(){
+  try{
+    if(window.renderMathInElement){
+      renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false});
+    }else{
+      window.addEventListener('load',()=>{try{if(window.renderMathInElement)renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false});}catch(_){}});
+    }
+  }catch(_){}
+}
+function init(){
+  try{ heroFig(); }catch(e){ console.error('heroFig',e); }
+  try{ renderTunnels(); renderSoils(); }catch(e){ console.error('render lists',e); }
+  try{ const b=document.querySelector('#presets .preset[data-p="single"]'); if(b) b.classList.add('on'); }catch(e){ console.error('preset',e); }
+  try{ draw(); }catch(e){ console.error('draw',e); }
+  renderMath();
+  window.__initOK=true;
+}
+/* run init whether or not DOMContentLoaded already fired (webview/iframe/srcdoc safe) */
+if(document.readyState==='loading'){
+  window.addEventListener('DOMContentLoaded',init);
+}else{
+  init();
+}
+/* safety net: if init never completed (e.g. threw very early), force content visible so the page is never blank — otherwise leave the scroll-reveal animation intact */
+window.addEventListener('load',()=>setTimeout(()=>{ if(!window.__initOK) showAllReveals(); },400));
 </script>
 </body>
 </html>
